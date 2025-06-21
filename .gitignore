@@ -38,3 +38,6 @@ out/
 *.orig
 tests/CI/output
 .develvars
+
+.version
+.flavor
