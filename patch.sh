@@ -12,6 +12,7 @@ echo "Fix" > .flavor
 sudo ./contrib/scripts/install_prereq install
 
 
+# Autoconf
 #autoreconf --install --force
 
 #aclocal
@@ -20,3 +21,7 @@ sudo ./contrib/scripts/install_prereq install
 #automake --add-missing
 
 ./bootstrap.sh
+
+# Download
+./contrib/scripts/get_mp3_source.sh
+./contrib/scripts/get_ilbc_source.sh
