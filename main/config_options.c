@@ -83,19 +83,19 @@ static struct ao2_container *xmldocs;
 
 /*! \brief Value of the aco_option_type enum as strings */
 static char *aco_option_type_string[] = {
-	"ACL",				/* OPT_ACL_T, */
-	"Boolean",			/* OPT_BOOL_T, */
-	"Boolean",			/* OPT_BOOLFLAG_T, */
-	"String",			/* OPT_CHAR_ARRAY_T, */
-	"Codec",			/* OPT_CODEC_T, */
-	"Custom",			/* OPT_CUSTOM_T, */
-	"Double",			/* OPT_DOUBLE_T, */
-	"Integer",			/* OPT_INT_T, */
-	"None",				/* OPT_NOOP_T, */
+	"ACL",			/* OPT_ACL_T, */
+	"Boolean",		/* OPT_BOOL_T, */
+	"Boolean",		/* OPT_BOOLFLAG_T, */
+	"String",		/* OPT_CHAR_ARRAY_T, */
+	"Codec",		/* OPT_CODEC_T, */
+	"Custom",		/* OPT_CUSTOM_T, */
+	"Double",		/* OPT_DOUBLE_T, */
+	"Integer",		/* OPT_INT_T, */
+	"None",			/* OPT_NOOP_T, */
 	"IP Address",		/* OPT_SOCKADDR_T, */
-	"String",			/* OPT_STRINGFIELD_T, */
+	"String",		/* OPT_STRINGFIELD_T, */
 	"Unsigned Integer",	/* OPT_UINT_T, */
-	"Boolean",			/* OPT_YESNO_T, */
+	"Boolean",		/* OPT_YESNO_T, */
 	"Time Length",		/* OPT_TIMELEN_T, */
 };
 #endif /* AST_XML_DOCS */
@@ -1239,7 +1239,7 @@ static void cli_show_module_types(struct ast_cli_args *a)
 	ast_assert(a->argc == 4);
 
 	if (!(item = ao2_find(xmldocs, a->argv[3], OBJ_KEY))) {
-		ast_cli(a->fd, "Module %s not found.\n", a->argv[3]);
+		ast_cli(a->fd, "Module %s not found or has no config XML documentation.\n", a->argv[3]);
 		return;
 	}
 

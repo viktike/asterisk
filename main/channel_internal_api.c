@@ -328,6 +328,15 @@ void ast_channel_macropriority_set(struct ast_channel *chan, int value)
 {
 	chan->macropriority = value;
 }
+int ast_channel_tech_hangupcause(const struct ast_channel *chan)
+{
+	return chan->tech_hangupcause;
+}
+void ast_channel_tech_hangupcause_set(struct ast_channel *chan, int value)
+{
+	chan->tech_hangupcause = value;
+	ast_channel_snapshot_invalidate_segment(chan, AST_CHANNEL_SNAPSHOT_INVALIDATE_HANGUP);
+}
 int ast_channel_priority(const struct ast_channel *chan)
 {
 	return chan->priority;
@@ -1177,23 +1186,68 @@ struct ast_str *ast_channel_dialed_causes_channels(const struct ast_channel *cha
 
 struct ast_control_pvt_cause_code *ast_channel_dialed_causes_find(const struct ast_channel *chan, const char *chan_name)
 {
-	return ao2_find(chan->dialed_causes, chan_name, OBJ_KEY);
+	struct ao2_iterator causes;
+	struct ast_control_pvt_cause_code *cause_code;
+
+	causes = ao2_iterator_init(chan->dialed_causes, 0);
+	while ((cause_code = ao2_iterator_next(&causes))) {
+		if (strcmp(cause_code->chan_name, chan_name)) {
+			ao2_ref(cause_code, -1);
+			continue;
+		}
+		if (!cause_code->cause_extended) {
+			ao2_iterator_destroy(&causes);
+			return cause_code;
+		}
+		ao2_ref(cause_code, -1);
+	}
+	ao2_iterator_destroy(&causes);
+
+	return NULL;
+}
+
+struct ao2_iterator *ast_channel_dialed_causes_find_multiple(const struct ast_channel *chan, const char *chan_name)
+{
+	struct ao2_iterator *causes;
+	struct ast_control_pvt_cause_code *cause_code;
+
+	causes = ao2_find(chan->dialed_causes, chan_name, OBJ_SEARCH_KEY | OBJ_MULTIPLE);
+	while ((cause_code = ao2_iterator_next(causes))) {
+		ao2_ref(cause_code, -1);
+	}
+	ao2_iterator_destroy(causes);
+
+	return ao2_find(chan->dialed_causes, chan_name, OBJ_SEARCH_KEY | OBJ_MULTIPLE);
+}
+
+static int remove_dialstatus_cb(void *obj, void *arg, int flags)
+{
+	struct ast_control_pvt_cause_code *cause_code = obj;
+	char *str = ast_tech_to_upper(ast_strdupa(arg));
+	char *pc_str = ast_tech_to_upper(ast_strdupa(cause_code->chan_name));
+
+	if (cause_code->cause_extended) {
+		return 0;
+	}
+	return !strcmp(pc_str, str) ? CMP_MATCH | CMP_STOP : 0;
 }
 
 int ast_channel_dialed_causes_add(const struct ast_channel *chan, const struct ast_control_pvt_cause_code *cause_code, int datalen)
 {
 	struct ast_control_pvt_cause_code *ao2_cause_code;
-	ao2_find(chan->dialed_causes, cause_code->chan_name, OBJ_KEY | OBJ_UNLINK | OBJ_NODATA);
-	ao2_cause_code = ao2_alloc(datalen, NULL);
+	char *arg = ast_strdupa(cause_code->chan_name);
 
+	ao2_callback(chan->dialed_causes, OBJ_MULTIPLE | OBJ_NODATA | OBJ_UNLINK, remove_dialstatus_cb, arg);
+
+	ao2_cause_code = ao2_alloc(datalen, NULL);
 	if (ao2_cause_code) {
 		memcpy(ao2_cause_code, cause_code, datalen);
 		ao2_link(chan->dialed_causes, ao2_cause_code);
 		ao2_ref(ao2_cause_code, -1);
 		return 0;
-	} else {
-		return -1;
 	}
+
+	return -1;
 }
 
 void ast_channel_dialed_causes_clear(const struct ast_channel *chan)
@@ -1385,6 +1439,15 @@ void ast_channel_internal_swap_snapshots(struct ast_channel *a, struct ast_chann
 	snapshot = a->snapshot;
 	a->snapshot = b->snapshot;
 	b->snapshot = snapshot;
+}
+
+void ast_channel_internal_swap_endpoints(struct ast_channel *a, struct ast_channel *b)
+{
+	struct ast_endpoint *endpoint;
+
+	endpoint = a->endpoint;
+	a->endpoint = b->endpoint;
+	b->endpoint = endpoint;
 }
 
 void ast_channel_internal_set_fake_ids(struct ast_channel *chan, const char *uniqueid, const char *linkedid)
@@ -1584,4 +1647,23 @@ void ast_channel_snapshot_set(struct ast_channel *chan, struct ast_channel_snaps
 struct ast_flags *ast_channel_snapshot_segment_flags(struct ast_channel *chan)
 {
 	return &chan->snapshot_segment_flags;
+}
+
+struct ast_endpoint *ast_channel_endpoint(const struct ast_channel *chan)
+{
+	return chan->endpoint;
+}
+
+void ast_channel_endpoint_set(struct ast_channel *chan, struct ast_endpoint *endpoint)
+{
+	if (chan->endpoint) {
+		ast_endpoint_remove_channel(chan->endpoint, chan);
+		ao2_ref(chan->endpoint, -1);
+	}
+
+	chan->endpoint = ao2_bump(endpoint);
+
+	if (chan->endpoint) {
+		ast_endpoint_add_channel(chan->endpoint, chan);
+	}
 }

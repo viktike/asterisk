@@ -42,6 +42,7 @@
 #include "asterisk/mod_format.h"
 #include "asterisk/sched.h"
 #include "asterisk/channel.h"
+#include "asterisk/cel.h"
 #include "asterisk/musiconhold.h"
 #include "asterisk/say.h"
 #include "asterisk/file.h"
@@ -948,7 +949,7 @@ __ast_channel_alloc_ap(int needqueue, int state, const char *cid_num, const char
 
 
 	if (endpoint) {
-		ast_endpoint_add_channel(endpoint, tmp);
+		ast_channel_endpoint_set(tmp, endpoint);
 	}
 
 	/*
@@ -1179,9 +1180,13 @@ int ast_queue_frame_head(struct ast_channel *chan, struct ast_frame *fin)
 /*! \brief Queue a hangup frame for channel */
 int ast_queue_hangup(struct ast_channel *chan)
 {
-	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
+	RAII_VAR(struct ast_json *, blob, ast_json_object_create(), ast_json_unref);
 	struct ast_frame f = { AST_FRAME_CONTROL, .subclass.integer = AST_CONTROL_HANGUP };
-	int res, cause;
+	int res, cause, tech_cause;
+
+	if (!blob) {
+		return -1;
+	}
 
 	/* Yeah, let's not change a lock-critical value without locking */
 	ast_channel_lock(chan);
@@ -1189,8 +1194,11 @@ int ast_queue_hangup(struct ast_channel *chan)
 
 	cause = ast_channel_hangupcause(chan);
 	if (cause) {
-		blob = ast_json_pack("{s: i}",
-			"cause", cause);
+		ast_json_object_set(blob, "cause", ast_json_integer_create(cause));
+	}
+	tech_cause = ast_channel_tech_hangupcause(chan);
+	if (tech_cause) {
+		ast_json_object_set(blob, "tech_cause", ast_json_integer_create(tech_cause));
 	}
 
 	ast_channel_publish_blob(chan, ast_channel_hangup_request_type(), blob);
@@ -1206,6 +1214,7 @@ int ast_queue_hangup_with_cause(struct ast_channel *chan, int cause)
 	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
 	struct ast_frame f = { AST_FRAME_CONTROL, .subclass.integer = AST_CONTROL_HANGUP };
 	int res;
+	int tech_cause = 0;
 
 	if (cause >= 0) {
 		f.data.uint32 = cause;
@@ -1219,6 +1228,16 @@ int ast_queue_hangup_with_cause(struct ast_channel *chan, int cause)
 	}
 	blob = ast_json_pack("{s: i}",
 			     "cause", cause);
+	if (!blob) {
+		ast_channel_unlock(chan);
+		return -1;
+	}
+
+	tech_cause = ast_channel_tech_hangupcause(chan);
+	if (tech_cause) {
+		ast_json_object_set(blob, "tech_cause", ast_json_integer_create(tech_cause));
+	}
+
 	ast_channel_publish_blob(chan, ast_channel_hangup_request_type(), blob);
 
 	res = ast_queue_frame(chan, &f);
@@ -2194,6 +2213,8 @@ static void ast_channel_destructor(void *obj)
 
 	ast_channel_lock(chan);
 
+	ast_channel_endpoint_set(chan, NULL);
+
 	/* Get rid of each of the data stores on the channel */
 	while ((datastore = AST_LIST_REMOVE_HEAD(ast_channel_datastores(chan), entry)))
 		/* Free the data store */
@@ -2444,12 +2465,19 @@ int ast_softhangup(struct ast_channel *chan, int cause)
 {
 	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
 	int res;
+	int tech_cause = 0;
 
 	ast_channel_lock(chan);
 	res = ast_softhangup_nolock(chan, cause);
 	blob = ast_json_pack("{s: i, s: b}",
 			     "cause", cause,
 			     "soft", 1);
+
+	tech_cause = ast_channel_tech_hangupcause(chan);
+	if (tech_cause) {
+		ast_json_object_set(blob, "tech_cause", ast_json_integer_create(tech_cause));
+	}
+
 	ast_channel_publish_blob(chan, ast_channel_hangup_request_type(), blob);
 	ast_channel_unlock(chan);
 
@@ -2651,8 +2679,9 @@ int ast_raw_answer_with_stream_topology(struct ast_channel *chan, struct ast_str
 		ast_channel_unlock(chan);
 		break;
 	case AST_STATE_UP:
-		break;
+		/* Fall through */
 	default:
+		ast_debug(2, "Skipping answer, since channel state on %s is %s\n", ast_channel_name(chan), ast_state2str(ast_channel_state(chan)));
 		break;
 	}
 
@@ -3343,34 +3372,45 @@ static const char *dtmf_direction_to_string(enum DtmfDirection direction)
 static void send_dtmf_begin_event(struct ast_channel *chan,
 	enum DtmfDirection direction, const char digit)
 {
-	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
+	RAII_VAR(struct ast_json *, channel_blob, NULL, ast_json_unref);
 	char digit_str[] = { digit, '\0' };
 
-	blob = ast_json_pack("{ s: s, s: s }",
+	channel_blob = ast_json_pack("{ s: s, s: s }",
 		"digit", digit_str,
 		"direction", dtmf_direction_to_string(direction));
-	if (!blob) {
-		return;
-	}
 
-	ast_channel_publish_blob(chan, ast_channel_dtmf_begin_type(), blob);
+	if (channel_blob) {
+		ast_channel_publish_blob(chan, ast_channel_dtmf_begin_type(), channel_blob);
+	}
 }
 
 static void send_dtmf_end_event(struct ast_channel *chan,
 	enum DtmfDirection direction, const char digit, long duration_ms)
 {
-	RAII_VAR(struct ast_json *, blob, NULL, ast_json_unref);
+	RAII_VAR(struct ast_json *, channel_blob, NULL, ast_json_unref);
+	RAII_VAR(struct ast_json *, cel_blob, NULL, ast_json_unref);
 	char digit_str[] = { digit, '\0' };
 
-	blob = ast_json_pack("{ s: s, s: s, s: I }",
+	channel_blob = ast_json_pack("{ s: s, s: s, s: I }",
 		"digit", digit_str,
 		"direction", dtmf_direction_to_string(direction),
 		"duration_ms", (ast_json_int_t)duration_ms);
-	if (!blob) {
-		return;
+
+	if (channel_blob) {
+		ast_channel_publish_blob(chan, ast_channel_dtmf_end_type(), channel_blob);
 	}
 
-	ast_channel_publish_blob(chan, ast_channel_dtmf_end_type(), blob);
+	cel_blob = ast_json_pack("{ s: s, s: { s: s, s: I }}",
+		"event", dtmf_direction_to_string(direction),
+		"extra",
+			"digit", digit_str,
+			"duration_ms", (ast_json_int_t)duration_ms);
+
+	if (cel_blob) {
+		ast_cel_publish_event(chan, AST_CEL_DTMF, cel_blob);
+	} else {
+		ast_log(LOG_WARNING, "Unable to build extradata for DTMF CEL event on channel %s", ast_channel_name(chan));
+	}
 }
 
 static void send_flash_event(struct ast_channel *chan)
@@ -3532,16 +3572,12 @@ static struct ast_frame *__ast_read(struct ast_channel *chan, int dropaudio, int
 		 * The ast_waitfor() code records which of the channel's file
 		 * descriptors reported that data is available.  In theory,
 		 * ast_read() should only be called after ast_waitfor() reports
-		 * that a channel has data available for reading.  However,
-		 * there still may be some edge cases throughout the code where
-		 * ast_read() is called improperly.  This can potentially cause
-		 * problems, so if this is a developer build, make a lot of
-		 * noise if this happens so that it can be addressed.
-		 *
-		 * One of the potential problems is blocking on a dead channel.
+		 * that a channel has data available for reading but certain
+		 * situations with stasis and ARI could give a false indication.
+		 * For this reason, we don't stop any processing.
 		 */
 		if (ast_channel_fdno(chan) == -1) {
-			ast_log(LOG_ERROR,
+			ast_debug(3,
 				"ast_read() on chan '%s' called with no recorded file descriptor.\n",
 				ast_channel_name(chan));
 		}
@@ -7028,6 +7064,9 @@ static void channel_do_masquerade(struct ast_channel *original, struct ast_chann
 
 	/* The old snapshots need to follow the channels so the snapshot update is correct */
 	ast_channel_internal_swap_snapshots(clonechan, original);
+
+	/* Now we swap the endpoints if present */
+	ast_channel_internal_swap_endpoints(clonechan, original);
 
 	/* Swap channel names. This uses ast_channel_name_set directly, so we
 	 * don't get any spurious rename events.

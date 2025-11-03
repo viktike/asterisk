@@ -120,7 +120,7 @@
 							prefixed with one or two underbars ('_').</para>
 						</note>
 						<note>
-							<para>Using this option from a Macro() or GoSub() might not make sense as there would be no return points.</para>
+							<para>Using this option from a Macro() or Gosub() might not make sense as there would be no return points.</para>
 						</note>
 						<note>
 							<para>This option will override the 'x' option</para>
@@ -172,6 +172,9 @@
 						<para>Additionally, to prevent a bridged channel (the target of the Bridge application)
 						from answering, the <literal>BRIDGE_NOANSWER</literal> variable can be set to inhibit
 						answering.</para>
+						<warning><para>Do not set the <literal>BRIDGE_NOANSWER</literal> variable globally,
+						as it will break normal bridging behavior in many cases. Only use this variable on
+						a per-channel basis when you really know what you are doing!</para></warning>
 					</option>
 					<option name="S(x)">
 						<para>Hang up the call after <replaceable>x</replaceable> seconds *after* the called party has answered the call.</para>

@@ -52,7 +52,7 @@ struct ast_channelstorage_instance *ast_channelstorage_open(
 {
 	struct ast_channelstorage_instance *storage_instance = NULL;
 
-	storage_instance = storage_driver->open(instance_name);
+	storage_instance = storage_driver->open_instance(instance_name);
 	if (!storage_instance) {
 		ast_log(LOG_ERROR, "Failed to open channel storage driver '%s'\n",
 			storage_driver->driver_name);
@@ -64,7 +64,7 @@ struct ast_channelstorage_instance *ast_channelstorage_open(
 
 void ast_channelstorage_close(struct ast_channelstorage_instance *storage_instance)
 {
-	CHANNELSTORAGE_API(storage_instance, close);
+	CHANNELSTORAGE_API(storage_instance, close_instance);
 };
 
 int channelstorage_exten_cb(void *obj, void *arg, void *data, int flags)
@@ -276,76 +276,6 @@ static void *test_storage_thread(void *data)
 	end = ast_tvnow();
 	elapsed = ast_tvdiff_us(end, start);
 	ast_test_status_update(test, "%*s: %8ld\n", collen, "by context/exten", elapsed);
-
-#if 0
-	start = ast_tvnow();
-	for (i = 0; i < CHANNEL_COUNT; i++) {
-		sprintf(search1, "TestChannel-%ld-%04d-something", rand, i);
-		mock_channel = CHANNELSTORAGE_API(storage_instance, get_by_name_or_uniqueid, search1);
-		ast_test_validate_cleanup(test, mock_channel, res, done);
-
-		CHANNELSTORAGE_API(storage_instance, wrlock);
-
-		sprintf(mock_channel->context, "TestXXContext-%ld-%04d", rand, i);
-		sprintf(search1, "TestContext-%ld-%04d", rand, i);
-
-		rc = CHANNELSTORAGE_API(storage_instance, update, mock_channel,
-			AST_CHANNELSTORAGE_UPDATE_CONTEXT, search1, mock_channel->context, 0);
-		ast_test_validate_cleanup(test, rc == 0, res, done);
-
-		sprintf(mock_channel->exten, "TestXXExten-%ld-%04d", rand, i);
-		sprintf(search2, "TestExten-%ld-%04d", rand, i);
-
-		rc = CHANNELSTORAGE_API(storage_instance, update, mock_channel,
-			AST_CHANNELSTORAGE_UPDATE_EXTEN, search2, mock_channel->exten, 0);
-		CHANNELSTORAGE_API(storage_instance, unlock);
-
-		ast_test_validate_cleanup(test, rc == 0, res, done);
-
-		ast_channel_unref(mock_channel);
-	}
-	end = ast_tvnow();
-	elapsed = ast_tvdiff_us(end, start);
-	ast_test_status_update(test, "%*s: %8ld\n", collen, "update", elapsed);
-
-	start = ast_tvnow();
-	for (i = 0; i < CHANNEL_COUNT; i++) {
-		sprintf(search1, "TestXXContext-%ld-%04d", rand, i);
-		sprintf(search2, "TestXXExten-%ld-%04d", rand, i);
-		mock_channel = CHANNELSTORAGE_API(storage_instance, get_by_exten, search2, search1);
-		ast_test_validate_cleanup(test, mock_channel, res, done);
-		ast_channel_unref(mock_channel);
-	}
-	end = ast_tvnow();
-	elapsed = ast_tvdiff_us(end, start);
-	ast_test_status_update(test, "%*s: %8ld\n", collen, "by context/exten2", elapsed);
-
-	start = ast_tvnow();
-	for (i = 0; i < CHANNEL_COUNT; i++) {
-		sprintf(search1, "TestChannel-%ld-%04d-something", rand, i);
-		mock_channel = CHANNELSTORAGE_API(storage_instance, get_by_name_or_uniqueid, search1);
-		ast_test_validate_cleanup(test, mock_channel, res, done);
-		sprintf(search2, "TestXXChannel-%ld-%04d", rand, i);
-		rc = CHANNELSTORAGE_API(storage_instance, update, mock_channel,
-			AST_CHANNELSTORAGE_UPDATE_NAME, search1, search2, 1);
-		ast_channel_unref(mock_channel);
-		ast_test_validate_cleanup(test, rc == 0, res, done);
-	}
-	end = ast_tvnow();
-	elapsed = ast_tvdiff_us(end, start);
-	ast_test_status_update(test, "%*s: %8ld\n", collen, "change name", elapsed);
-
-	start = ast_tvnow();
-	for (i = 0; i < CHANNEL_COUNT; i++) {
-		sprintf(search1, "TestXXChannel-%ld-%04d", rand, i);
-		mock_channel = CHANNELSTORAGE_API(storage_instance, get_by_name_or_uniqueid, search1);
-		ast_test_validate_cleanup_custom(test, mock_channel, res, done,"Channel %s not found\n", search1);
-		ast_channel_unref(mock_channel);
-	}
-	end = ast_tvnow();
-	elapsed = ast_tvdiff_us(end, start);
-	ast_test_status_update(test, "%*s: %8ld\n", collen, "by name exact2", elapsed);
-#endif
 
 	i = 0;
 	start = ast_tvnow();

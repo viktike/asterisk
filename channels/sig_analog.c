@@ -390,6 +390,12 @@ static int analog_unalloc_sub(struct analog_pvt *p, enum analog_sub x)
 
 static int analog_send_callerid(struct analog_pvt *p, int cwcid, struct ast_party_caller *caller)
 {
+	/* If Caller ID is disabled for the line, that means we do not send ANY spill whatsoever. */
+	if (!p->use_callerid) {
+		ast_debug(1, "Caller ID is disabled for channel %d, skipping spill\n", p->channel);
+		return 0;
+	}
+
 	ast_debug(1, "Sending callerid.  CID_NAME: '%s' CID_NUM: '%s'\n",
 		caller->id.name.str,
 		caller->id.number.str);
@@ -862,6 +868,16 @@ int analog_available(struct analog_pvt *p)
 static int analog_stop_callwait(struct analog_pvt *p)
 {
 	p->callwaitcas = 0;
+
+	/* There are 3 scenarios in which we need to reset the dialmode to permdialmode.
+	 * 1) When placing a new outgoing call (either the first or a three-way)
+	 * 2) When receiving a new incoming call
+	 *   2A) If it's the first incoming call (not a call waiting), we reset
+	 *       in dahdi_hangup.
+	 *   2B ) If it's a call waiting we've answered, either by swapping calls
+	 *        or having it ring through, we call analog_stop_callwait. That's this! */
+	p->dialmode = p->permdialmode;
+
 	if (analog_callbacks.stop_callwait) {
 		return analog_callbacks.stop_callwait(p->chan_pvt);
 	}
@@ -2071,8 +2087,8 @@ static void *__analog_ss_thread(void *data)
 			case ANALOG_SIG_E911:
 			case ANALOG_SIG_FGC_CAMAMF:
 			case ANALOG_SIG_SF_FEATDMF:
-				res = analog_my_getsigstr(chan, dtmfbuf + 1, "#", 3000);
-				/* if international caca, do it again to get real ANO */
+				res = analog_my_getsigstr(chan, dtmfbuf + 1, "#ABC", 3000);
+				/* if international CAC, do it again to get real ANI */
 				if ((p->sig == ANALOG_SIG_FEATDMF) && (dtmfbuf[1] != '0')
 					&& (strlen(dtmfbuf) != 14)) {
 					if (analog_wink(p, idx)) {
@@ -2177,7 +2193,6 @@ static void *__analog_ss_thread(void *data)
 			* KP (*) and ST (#) are considered to be digits */
 
 			int cnoffset = p->ani_info_digits + 1;
-			ast_debug(1, "cnoffset: %d\n", cnoffset);
 
 			/* This is how long to wait before the wink to start ANI spill
 			 * Pulled from chan_dahdi.conf, default is 1000ms */
@@ -2186,7 +2201,7 @@ static void *__analog_ss_thread(void *data)
 				goto quit;
 			}
 			analog_off_hook(p);
-			ast_debug(1, "Sent wink to signal ANI start\n");
+			ast_debug(1, "Went off-hook to signal ANI start\n");
 			analog_dsp_set_digitmode(p, ANALOG_DIGITMODE_MF);
 
 			/* ani_timeout is configured in chan_dahdi.conf. default is 10000ms.
@@ -2285,8 +2300,8 @@ static void *__analog_ss_thread(void *data)
 				ast_copy_string(exten2, exten, sizeof(exten2));
 				/* Parse out extension and callerid */
 				stringp=exten2 +1;
-				s1 = strsep(&stringp, "#");
-				s2 = strsep(&stringp, "#");
+				s1 = strsep(&stringp, "#ABC");
+				s2 = strsep(&stringp, "#ABC");
 				if (s2 && (*(s2 + 1) == '0')) {
 					if (*(s2 + 2)) {
 						ast_set_callerid(chan, s2 + 2, NULL, s2 + 2);
@@ -2373,6 +2388,29 @@ static void *__analog_ss_thread(void *data)
 		 */
 		p->hidecallerid = p->permhidecallerid;
 
+		/* Set the default dial mode.
+		 * As with Caller ID, this is independent for each call,
+		 * and changes made using the CHANNEL function are only temporary.
+		 * This reset ensures temporary changes are discarded when a new call is originated.
+		 *
+		 * XXX There is a slight edge case in that because the dialmode is reset to permdialmode,
+		 * assuming permdialmode=both, if a user disables dtmf during call 1, then flashes and
+		 * starts call 2, this will set dialmode back to permcallmode on the private,
+		 * allowing tone dialing to (correctly) work on call 2.
+		 * If the user flashes back to call 1, however, tone dialing will again work on call 1.
+		 *
+		 * This problem does not exist with the other settings that involve a "permanent"
+		 * and "transient" settings (e.g. hidecallerid, callwaiting), because hidecallerid
+		 * only matters when originating a call, so as soon as it's been placed, it doesn't
+		 * matter if it gets reset. For callwaiting, the setting is supposed to be common
+		 * to the entire channel private (all subchannels), which is NOT the case with this setting.
+		 *
+		 * The correct and probably only fix for this edge case is to move dialmode out of the channel private
+		 * (which is shared by all subchannels), and into the Asterisk channel structure. Just using an array for
+		 * each chan_dahdi subchannel won't work because the indices change as calls flip around.
+		 */
+		p->dialmode = p->permdialmode;
+
 		/* Read the first digit */
 		timeout = analog_get_firstdigit_timeout(p);
 		/* If starting a threeway call, never timeout on the first digit so someone
@@ -2383,6 +2421,8 @@ static void *__analog_ss_thread(void *data)
 		}
 		while (len < AST_MAX_EXTENSION-1) {
 			int is_exten_parking = 0;
+			int is_lastnumredial = 0;
+			int is_endofdialing = 0;
 
 			/* Read digit unless it's supposed to be immediate, in which case the
 			   only answer is 's' */
@@ -2399,8 +2439,27 @@ static void *__analog_ss_thread(void *data)
 				goto quit;
 			} else if (res) {
 				ast_debug(1,"waitfordigit returned '%c' (%d), timeout = %d\n", res, res, timeout);
-				exten[len++]=res;
+				exten[len++] = res;
 				exten[len] = '\0';
+				if (len > 1 && res == '#' && !ast_exists_extension(chan, ast_channel_context(chan), exten, 1, p->cid_num)) {
+					/* The user was dialing something that matched, but as soon as he dialed #, we no longer have a match.
+					 * Check if what was dialed immediately prior to the # is an extension that exists.
+					 * If so, we can treat "#" as the end of dialing terminator to allow user to complete the call without a timeout.
+					 * This is fully compatible with the user's dialplan, since we only do this if there isn't a dialplan match. */
+					exten[--len] = '\0'; /* Remove '#' from the buffer to test the extension without it */
+					if (ast_exists_extension(chan, ast_channel_context(chan), exten, 1, p->cid_num)) {
+						/* The number dialed prior to the # exists as a valid extension.
+						 * Since the number with # does not exist, treat # as end of dialing. */
+						ast_debug(1, "Interpreting '#' as end of dialing\n");
+						is_endofdialing = 1;
+					} else {
+						/* Even without the #, the number in the buffer is not a valid extension.
+						 * In this case, it's still invalid; do nothing special.
+						 * We simply reverse the removal of '#' from the buffer, i.e. we append it again. */
+						exten[len++] = res;
+						exten[len ] = '\0';
+					}
+				}
 			}
 			if (!ast_ignore_pattern(ast_channel_context(chan), exten)) {
 				analog_play_tone(p, idx, -1);
@@ -2414,7 +2473,12 @@ static void *__analog_ss_thread(void *data)
 				/* Last Number Redial */
 				if (!ast_strlen_zero(p->lastexten)) {
 					ast_verb(4, "Redialing last number dialed on channel %d\n", p->channel);
+					analog_lock_private(p);
 					ast_copy_string(exten, p->lastexten, sizeof(exten));
+					analog_unlock_private(p);
+					/* If Last Number Redial was used, even if the user might normally be able to dial further
+					 * digits for the digits dialed, we should complete the call immediately without delay. */
+					is_lastnumredial = 1;
 				} else {
 					ast_verb(3, "Last Number Redial not possible on channel %d (no saved number)\n", p->channel);
 					res = analog_play_tone(p, idx, ANALOG_TONE_CONGESTION);
@@ -2424,11 +2488,13 @@ static void *__analog_ss_thread(void *data)
 				}
 			}
 			if (ast_exists_extension(chan, ast_channel_context(chan), exten, 1, p->cid_num) && !is_exten_parking) {
-				if (!res || !ast_matchmore_extension(chan, ast_channel_context(chan), exten, 1, p->cid_num)) {
+				if (!res || is_lastnumredial || is_endofdialing || !ast_matchmore_extension(chan, ast_channel_context(chan), exten, 1, p->cid_num)) {
 					if (getforward) {
 						/* Record this as the forwarding extension */
+						analog_lock_private(p);
 						ast_copy_string(p->call_forward, exten, sizeof(p->call_forward));
-						ast_verb(3, "Setting call forward to '%s' on channel %d\n", p->call_forward, p->channel);
+						analog_unlock_private(p);
+						ast_verb(3, "Setting call forward to '%s' on channel %d\n", exten, p->channel);
 						res = analog_play_tone(p, idx, ANALOG_TONE_DIALRECALL);
 						if (res) {
 							break;
@@ -3169,6 +3235,10 @@ static struct ast_frame *__analog_handle_event(struct analog_pvt *p, struct ast_
 				ast_debug(2, "Letting this call hang up normally, since it's not the only call\n");
 			} else if (!p->owner || !p->subs[ANALOG_SUB_REAL].owner || ast_channel_state(ast) != AST_STATE_UP) {
 				ast_debug(2, "Called Subscriber Held does not apply: channel state is %d\n", ast_channel_state(ast));
+			} else if (p->owner && p->subs[ANALOG_SUB_REAL].owner && ast_strlen_zero(ast_channel_appl(p->subs[ANALOG_SUB_REAL].owner))) {
+				/* If the channel application is empty, it is likely a masquerade has occured, in which case don't hold any calls.
+				 * This conditional matches only executions that would have reached the strcmp below. */
+				ast_debug(1, "Skipping Called Subscriber Held; channel has no application\n");
 			} else if (!p->owner || !p->subs[ANALOG_SUB_REAL].owner || strcmp(ast_channel_appl(p->subs[ANALOG_SUB_REAL].owner), "AppDial")) {
 				/* Called Subscriber held only applies to incoming calls, not outgoing calls.
 				 * We can't use p->outgoing because that is always true, for both incoming and outgoing calls, so it's not accurate.

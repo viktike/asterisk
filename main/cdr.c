@@ -273,6 +273,14 @@
 					submission of CDR data during asterisk shutdown, set this to <literal>yes</literal>.</para>
 					</description>
 				</configOption>
+				<configOption name="canceldispositionenabled" default="no">
+					<synopsis>Whether to enable CANCEL disposition in CDR</synopsis>
+					<description><para>
+					Define if the CANCEL disposition state should be used.
+					When enabled, The NO ANSWER disposition will be split into two distinct dispositions: CANCEL and NO ANSWER.
+					</para>
+					</description>
+				</configOption>
 			</configObject>
 		</configFile>
 	</configInfo>
@@ -1149,7 +1157,6 @@ static struct cdr_object *cdr_object_alloc(struct ast_channel_snapshot *chan, co
 	ast_string_field_set(cdr, uniqueid, chan->base->uniqueid);
 	ast_string_field_set(cdr, name, chan->base->name);
 	ast_string_field_set(cdr, linkedid, chan->peer->linkedid);
-	ast_string_field_set(cdr, tenantid, chan->base->tenantid);
 	cdr->disposition = AST_CDR_NULL;
 	cdr->sequence = ast_atomic_fetchadd_int(&global_cdr_sequence, +1);
 	cdr->lastevent = *event_time;
@@ -1418,7 +1425,7 @@ static struct ast_cdr *cdr_object_create_public_records(struct cdr_object *cdr)
 		ast_copy_string(cdr_copy->lastdata, it_cdr->data, sizeof(cdr_copy->lastdata));
 		ast_copy_string(cdr_copy->dst, it_cdr->exten, sizeof(cdr_copy->dst));
 		ast_copy_string(cdr_copy->dcontext, it_cdr->context, sizeof(cdr_copy->dcontext));
-		ast_copy_string(cdr_copy->tenantid, it_cdr->tenantid, sizeof(cdr_copy->tenantid));
+		ast_copy_string(cdr_copy->tenantid, party_a->base->tenantid, sizeof(cdr_copy->tenantid));
 
 		/* Party B */
 		if (party_b) {
@@ -1928,7 +1935,13 @@ static enum ast_cdr_disposition dial_status_to_disposition(const char *dial_stat
 		return AST_CDR_ANSWERED;
 	} else if (!strcmp(dial_status, "BUSY")) {
 		return AST_CDR_BUSY;
-	} else if (!strcmp(dial_status, "CANCEL") || !strcmp(dial_status, "NOANSWER")) {
+	} else if (!strcmp(dial_status, "CANCEL")) {
+		if (!is_cdr_flag_set(CDR_CANCEL_DISPOSITION_ENABLED)) {
+			return AST_CDR_NOANSWER;
+		} else {
+			return AST_CDR_CANCEL;
+		}
+	} else if (!strcmp(dial_status, "NOANSWER")) {
 		return AST_CDR_NOANSWER;
 	} else if (!strcmp(dial_status, "CONGESTION")) {
 		if (!is_cdr_flag_set(CDR_CONGESTION)) {
@@ -3575,6 +3588,8 @@ const char *ast_cdr_disp2str(int disposition)
 		return "ANSWERED";
 	case AST_CDR_CONGESTION:
 		return "CONGESTION";
+	case AST_CDR_CANCEL:
+		return "CANCEL";
 	}
 	return "UNKNOWN";
 }
@@ -4313,6 +4328,7 @@ static char *handle_cli_status(struct ast_cli_entry *e, int cmd, struct ast_cli_
 		ast_cli(a->fd, "  Log congestion:             %s\n\n", ast_test_flag(&mod_cfg->general->settings, CDR_CONGESTION) ? "Yes" : "No");
 		ast_cli(a->fd, "  Ignore bridging changes:    %s\n\n", ast_test_flag(&mod_cfg->general->settings, CDR_IGNORE_STATE_CHANGES) ? "Yes" : "No");
 		ast_cli(a->fd, "  Ignore dial state changes:  %s\n\n", ast_test_flag(&mod_cfg->general->settings, CDR_IGNORE_DIAL_CHANGES) ? "Yes" : "No");
+		ast_cli(a->fd, "  Cancel disposition enabled: %s\n\n", ast_test_flag(&mod_cfg->general->settings, CDR_CANCEL_DISPOSITION_ENABLED) ? "Yes" : "No");
 		if (ast_test_flag(&mod_cfg->general->settings, CDR_BATCHMODE)) {
 			ast_cli(a->fd, "* Batch Mode Settings\n");
 			ast_cli(a->fd, "  -------------------\n");
@@ -4494,6 +4510,7 @@ static int process_config(int reload)
 		aco_option_register(&cfg_info, "channeldefaultenabled", ACO_EXACT, general_options, DEFAULT_CHANNEL_ENABLED, OPT_BOOLFLAG_T, 1, FLDSET(struct ast_cdr_config, settings), CDR_CHANNEL_DEFAULT_ENABLED);
 		aco_option_register(&cfg_info, "ignorestatechanges", ACO_EXACT, general_options, DEFAULT_IGNORE_STATE_CHANGES, OPT_BOOLFLAG_T, 1, FLDSET(struct ast_cdr_config, settings), CDR_IGNORE_STATE_CHANGES);
 		aco_option_register(&cfg_info, "ignoredialchanges", ACO_EXACT, general_options, DEFAULT_IGNORE_DIAL_CHANGES, OPT_BOOLFLAG_T, 1, FLDSET(struct ast_cdr_config, settings), CDR_IGNORE_DIAL_CHANGES);
+		aco_option_register(&cfg_info, "canceldispositionenabled", ACO_EXACT, general_options, "0", OPT_BOOLFLAG_T, 1, FLDSET(struct ast_cdr_config, settings), CDR_CANCEL_DISPOSITION_ENABLED);
 	}
 
 	if (aco_process_config(&cfg_info, reload) == ACO_PROCESS_ERROR) {

@@ -2848,6 +2848,16 @@ void ast_channel_internal_swap_endpoint_forward(struct ast_channel *a, struct as
 void ast_channel_internal_swap_snapshots(struct ast_channel *a, struct ast_channel *b);
 
 /*!
+ * \brief Swap endpoints between two channels
+ * \param a First channel
+ * \param b Second channel
+ *
+ * \note
+ * This is used in masquerade to exchange endpoints
+ */
+void ast_channel_internal_swap_endpoints(struct ast_channel *a, struct ast_channel *b);
+
+/*!
  * \brief Set uniqueid and linkedid string value only (not time)
  * \param chan The channel to set the uniqueid to
  * \param uniqueid The uniqueid to set
@@ -4271,6 +4281,8 @@ int ast_channel_hangupcause(const struct ast_channel *chan);
 void ast_channel_hangupcause_set(struct ast_channel *chan, int value);
 int ast_channel_macropriority(const struct ast_channel *chan);
 void ast_channel_macropriority_set(struct ast_channel *chan, int value);
+int ast_channel_tech_hangupcause(const struct ast_channel *chan);
+void ast_channel_tech_hangupcause_set(struct ast_channel *chan, int value);
 int ast_channel_priority(const struct ast_channel *chan);
 void ast_channel_priority_set(struct ast_channel *chan, int value);
 int ast_channel_rings(const struct ast_channel *chan);
@@ -4348,6 +4360,8 @@ ast_callid ast_channel_callid(const struct ast_channel *chan);
 struct ast_channel_snapshot *ast_channel_snapshot(const struct ast_channel *chan);
 void ast_channel_snapshot_set(struct ast_channel *chan, struct ast_channel_snapshot *snapshot);
 struct ast_flags *ast_channel_snapshot_segment_flags(struct ast_channel *chan);
+struct ast_endpoint *ast_channel_endpoint(const struct ast_channel *chan);
+void ast_channel_endpoint_set(struct ast_channel *chan, struct ast_endpoint *endpoint);
 
 /*!
  * \pre chan is locked
@@ -4531,6 +4545,24 @@ struct ast_str *ast_channel_dialed_causes_channels(const struct ast_channel *cha
  * \retval Pointer to a ref-counted ast_control_pvt_cause_code object containing the desired information
  */
 struct ast_control_pvt_cause_code *ast_channel_dialed_causes_find(const struct ast_channel *chan, const char *chan_name);
+
+/*!
+ * \since 20.17.0, 22.8.0, 23.1.0
+ * \brief Retrieve a ref-counted cause code information structure iterator
+ *
+ * \details
+ * This function makes use of datastore operations on the channel, so
+ * it is important to lock the channel before calling this function.
+ * This function increases the ref count of the returned object, so the
+ * calling function must decrease the reference count when it is finished
+ * with the object.
+ *
+ * \param chan The channel from which to retrieve information
+ * \param chan_name The name of the channel about which to retrieve information
+ * \retval NULL on search failure
+ * \retval Pointer to a ao2_iterator object containing the desired information
+ */
+struct ao2_iterator *ast_channel_dialed_causes_find_multiple(const struct ast_channel *chan, const char *chan_name);
 
 /*!
  * \since 11

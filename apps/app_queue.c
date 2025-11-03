@@ -177,7 +177,7 @@
 						to the specified destination and <emphasis>start</emphasis> execution at that location.</para>
 						<para>NOTE: Any channel variables you want the called channel to inherit from the caller channel must be
 						prefixed with one or two underbars ('_').</para>
-						<para>NOTE: Using this option from a Macro() or GoSub() might not make sense as there would be no return points.</para>
+						<para>NOTE: Using this option from a Macro() or Gosub() might not make sense as there would be no return points.</para>
 					</option>
 					<option name="h">
 						<para>Allow <emphasis>callee</emphasis> to hang up by pressing <literal>*</literal>.</para>
@@ -1800,6 +1800,9 @@ static int force_longest_waiting_caller;
 
 /*! \brief queues.conf [general] option */
 static int log_caller_id_name; 
+
+/*! \brief queues.conf [general] option */
+static int log_unpause_on_reason_change;
 
 /*! \brief name of the ringinuse field in the realtime database */
 static char *realtime_ringinuse_field;
@@ -4440,7 +4443,7 @@ static int say_position(struct queue_ent *qe, int ringing)
 	}
 
 	/* Only announce if the caller's queue position has improved since last time */
-	if (qe->parent->announceposition_only_up && qe->last_pos_said <= qe->pos) {
+	if (qe->parent->announceposition_only_up && qe->last_pos_said > 0 && qe->last_pos_said <= qe->pos) {
 		return 0;
 	}
 
@@ -6786,7 +6789,15 @@ static void handle_local_optimization_begin(void *userdata, struct stasis_subscr
 	struct local_optimization *optimization;
 	unsigned int id;
 	SCOPED_AO2LOCK(lock, queue_data);
-
+	
+	if (!local_one || !local_two || !source) {
+		ast_debug(1, "Local optimization begin missing channel snapshots:%s%s%s\n",
+		!local_one ? " local_one," : "",
+		!local_two ? " local_two," : "", 
+		!source ? " source," : "");
+		return;
+	}
+	
 	if (queue_data->dying) {
 		return;
 	}
@@ -7027,7 +7038,7 @@ static int setup_stasis_subs(struct queue_ent *qe, struct ast_channel *peer, str
 			handle_blind_transfer, queue_data);
 	stasis_message_router_add(queue_data->bridge_router, ast_attended_transfer_type(),
 			handle_attended_transfer, queue_data);
-	stasis_message_router_set_default(queue_data->bridge_router,
+	stasis_message_router_add(queue_data->bridge_router, stasis_subscription_change_type(),
 			queue_bridge_cb, queue_data);
 
 	queue_data->channel_router = stasis_message_router_create_pool(ast_channel_topic_all());
@@ -7049,7 +7060,7 @@ static int setup_stasis_subs(struct queue_ent *qe, struct ast_channel *peer, str
 			handle_hangup, queue_data);
 	stasis_message_router_add(queue_data->channel_router, ast_channel_masquerade_type(),
 			handle_masquerade, queue_data);
-	stasis_message_router_set_default(queue_data->channel_router,
+	stasis_message_router_add(queue_data->channel_router, stasis_subscription_change_type(),
 			queue_channel_cb, queue_data);
 
 	return 0;
@@ -8068,6 +8079,11 @@ static void set_queue_member_pause(struct call_queue *q, struct member *mem, con
 	if (mem->paused == paused) {
 		ast_debug(1, "%spausing already-%spaused queue member %s:%s\n",
 			(paused ? "" : "un"), (paused ? "" : "un"), q->name, mem->interface);
+		if (log_unpause_on_reason_change && paused) {
+			if (!ast_strings_equal(mem->reason_paused, reason)) {
+				ast_queue_log(q->name, "NONE", mem->membername, "UNPAUSE", "%s", "Auto-Unpause");
+			}
+		}
 	}
 
 	if (mem->realtime && !ast_strlen_zero(mem->rt_uniqueid)) {
@@ -9900,6 +9916,7 @@ static void queue_reset_global_params(void)
 	negative_penalty_invalid = 0;
 	log_membername_as_agent = 0;
 	force_longest_waiting_caller = 0;
+	log_unpause_on_reason_change = 0;
 }
 
 /*! Set the global queue parameters as defined in the "general" section of queues.conf */
@@ -9927,6 +9944,9 @@ static void queue_set_global_params(struct ast_config *cfg)
 	}
 	if ((general_val = ast_variable_retrieve(cfg, "general", "force_longest_waiting_caller"))) {
 		force_longest_waiting_caller = ast_true(general_val);
+	}
+	if ((general_val = ast_variable_retrieve(cfg, "general", "log_unpause_on_reason_change"))) {
+		log_unpause_on_reason_change = ast_true(general_val);
 	}
 	/* Apply log-caller-id-name in the same place as other global settings */
 	if ((general_val = ast_variable_retrieve(cfg, "general", "log-caller-id-name"))) {
@@ -10673,7 +10693,7 @@ static char *complete_queue(const char *line, const char *word, int pos, int sta
 	queue_iter = ao2_iterator_init(queues, 0);
 	while ((q = ao2_t_iterator_next(&queue_iter, "Iterate through queues"))) {
 		if (!strncasecmp(word, q->name, wordlen) && ++which > state
-			&& (!word_list_offset || !word_in_list(word_list, q->name))) {
+			&& (!word_list_offset || !word_list || !word_in_list(word_list, q->name))) {
 			ret = ast_strdup(q->name);
 			queue_t_unref(q, "Done with iterator");
 			break;
