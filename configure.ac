@@ -600,6 +600,7 @@ AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
 AST_EXT_LIB_SETUP([OSPTK], [OSP Toolkit], [osptk])
 AST_EXT_LIB_SETUP([PGSQL], [PostgreSQL], [postgres])
 AST_EXT_LIB_SETUP([BEANSTALK], [Beanstalk Job Queue], [beanstalk])
+AST_EXT_LIB_SETUP([LAME], [LAME MP3], [mp3lame])
 
 if test "x${PBX_PJPROJECT}" != "x1" ; then
 AST_EXT_LIB_SETUP([PJPROJECT], [PJPROJECT], [pjproject])
@@ -1655,6 +1656,7 @@ fi
 
 AST_EXT_LIB_CHECK([ALSA], [asound], [snd_pcm_open], [alsa/asoundlib.h])
 
+AST_EXT_LIB_CHECK([LAME], [mp3lame], [get_lame_version], [lame/lame.h])
 AST_EXT_LIB_CHECK([BFD], [bfd], [bfd_openr], [bfd.h])
 # Fedora/RedHat/CentOS require extra libraries
 AST_EXT_LIB_CHECK([BFD], [bfd], [bfd_openr], [bfd.h], [-ldl -liberty])
