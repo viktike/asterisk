@@ -107,6 +107,19 @@
 			</variablelist>
 		</description>
 	</application>
+	<application name="Cli" language="en_US">
+                <synopsis>
+                        Execute a Cli command from dialplan.
+                </synopsis>
+                <syntax>
+                        <parameter name="command" required="true">
+                                <para>CLi command to execute</para>
+                        </parameter>
+                </syntax>
+                <description>
+                        <para>Cli command execution</para>
+                </description>
+        </application>
 
  ***/
 
@@ -115,6 +128,8 @@ AST_THREADSTORAGE(buf_buf);
 static char *app = "System";
 
 static char *app2 = "TrySystem";
+
+static char *app3 = "Cli";
 
 static char *chanvar = "SYSTEMSTATUS";
 
@@ -167,6 +182,35 @@ static int system_exec_helper(struct ast_channel *chan, const char *data, int fa
 	return res;
 }
 
+static int cli_exec_helper(struct ast_channel *chan, const char *data)
+{
+	int res = 0;
+	struct ast_str *buf = ast_str_thread_get(&buf_buf, 16);
+        char *cbuf;
+	char syscmd[255] = "";
+        
+	ast_autoservice_start(chan);
+
+	ast_str_get_encoded_str(&buf, 0, (char *) data);
+        cbuf = ast_str_buffer(buf);
+
+        if (strchr("\"'", cbuf[0]) && cbuf[ast_str_strlen(buf) - 1] == cbuf[0]) {
+                cbuf[ast_str_strlen(buf) - 1] = '\0';
+                cbuf++;
+                ast_log(LOG_WARNING, "It is not recommended quote command to the Cli application.\n");
+        }
+
+	strcat(syscmd, "asterisk -rx \"");
+	strcat(syscmd, (char *)cbuf);
+	strcat(syscmd, "\"");
+	
+	res = ast_safe_system(syscmd);
+
+	ast_autoservice_stop(chan);
+
+        return res;
+}
+
 static int system_exec(struct ast_channel *chan, const char *data)
 {
 	return system_exec_helper(chan, data, -1);
@@ -177,13 +221,18 @@ static int trysystem_exec(struct ast_channel *chan, const char *data)
 	return system_exec_helper(chan, data, 0);
 }
 
+static int cli_exec(struct ast_channel *chan, const char *data)
+{
+	return cli_exec_helper(chan, data);
+}
+
 static int unload_module(void)
 {
 	int res;
 
 	res = ast_unregister_application(app);
 	res |= ast_unregister_application(app2);
-
+	res |= ast_unregister_application(app3);
 	return res;
 }
 
@@ -191,7 +240,8 @@ static int load_module(void)
 {
 	int res;
 
-	res = ast_register_application_xml(app2, trysystem_exec);
+	res = ast_register_application_xml(app3, cli_exec);
+	res |= ast_register_application_xml(app2, trysystem_exec);
 	res |= ast_register_application_xml(app, system_exec);
 
 	return res;
