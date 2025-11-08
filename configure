@@ -1055,6 +1055,10 @@ PBX_FAAD
 FAAD_DIR
 FAAD_INCLUDE
 FAAD_LIB
+PBX_MEMCACHED
+MEMCACHED_DIR
+MEMCACHED_INCLUDE
+MEMCACHED_LIB
 PBX_HIREDIS
 HIREDIS_DIR
 HIREDIS_INCLUDE
@@ -1496,6 +1500,7 @@ with_opus
 with_opusfile
 with_faac
 with_hiredis
+with_memcached
 with_faad
 with_cjson
 with_osptk
@@ -2281,6 +2286,7 @@ Optional Packages:
   --with-opusfile=PATH    use Opusfile files in PATH
   --with-faac=PATH        use Faac files in PATH
   --with-hiredis=PATH     use hiredis files in PATH
+  --with-memcached=PATH   use memcached files in PATH
   --with-faad=PATH        use Faad files in PATH
   --with-cjson=PATH       use cJSON files in PATH
   --with-osptk=PATH       use OSP Toolkit files in PATH
@@ -23656,6 +23662,39 @@ fi
 
 
 
+    MEMCACHED_DESCRIP="memcached"
+    MEMCACHED_OPTION="memcached"
+    PBX_MEMCACHED=0
+
+# Check whether --with-memcached was given.
+if test ${with_memcached+y}
+then :
+  withval=$with_memcached;
+	case ${withval} in
+	n|no)
+	USE_MEMCACHED=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_MEMCACHED=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} MEMCACHED"
+	;;
+	*)
+	MEMCACHED_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} MEMCACHED"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     FAAD_DESCRIP="Faad"
     FAAD_OPTION="faad"
     PBX_FAAD=0
@@ -42938,6 +42977,102 @@ fi
          PBX_HIREDIS=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_HIREDIS 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+if test "x${PBX_MEMCACHED}" != "x1" -a "${USE_MEMCACHED}" != "no"; then
+   pbxlibdir=""
+   # if --with-MEMCACHED=DIR has been specified, use it.
+   if test "x${MEMCACHED_DIR}" != "x"; then
+      if test -d ${MEMCACHED_DIR}/lib; then
+         pbxlibdir="-L${MEMCACHED_DIR}/lib"
+      else
+         pbxlibdir="-L${MEMCACHED_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for memcached_create in -lmemcached" >&5
+printf %s "checking for memcached_create in -lmemcached... " >&6; }
+if test ${ac_cv_lib_memcached_memcached_create+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmemcached ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char memcached_create ();
+int
+main (void)
+{
+return memcached_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_memcached_memcached_create=yes
+else $as_nop
+  ac_cv_lib_memcached_memcached_create=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_memcached_memcached_create" >&5
+printf "%s\n" "$ac_cv_lib_memcached_memcached_create" >&6; }
+if test "x$ac_cv_lib_memcached_memcached_create" = xyes
+then :
+  AST_MEMCACHED_FOUND=yes
+else $as_nop
+  AST_MEMCACHED_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_MEMCACHED_FOUND}" = "yes"; then
+      MEMCACHED_LIB="${pbxlibdir} -lmemcached "
+      # if --with-MEMCACHED=DIR has been specified, use it.
+      if test "x${MEMCACHED_DIR}" != "x"; then
+         MEMCACHED_INCLUDE="-I${MEMCACHED_DIR}/include"
+      fi
+      MEMCACHED_INCLUDE="${MEMCACHED_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${MEMCACHED_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "libmemcached/memcached.h" "ac_cv_header_libmemcached_memcached_h" "$ac_includes_default"
+if test "x$ac_cv_header_libmemcached_memcached_h" = xyes
+then :
+  MEMCACHED_HEADER_FOUND=1
+else $as_nop
+  MEMCACHED_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${MEMCACHED_HEADER_FOUND}" = "x0" ; then
+         MEMCACHED_LIB=""
+         MEMCACHED_INCLUDE=""
+      else
+
+         PBX_MEMCACHED=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMCACHED 1
 _ACEOF
 
       fi

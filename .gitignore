@@ -28,6 +28,8 @@ defaults.h
 makeopts
 makeopts.embed_rules
 menuselect-tree
+conftest*
+confdefs*
 *.sha1
 *.pyc
 *.gcno

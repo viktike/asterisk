@@ -532,6 +532,9 @@
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H
 
+/* Define to 1 if you have the memcached library. */
+#undef HAVE_MEMCACHED
+
 /* Define to 1 if you have the `memchr' function. */
 #undef HAVE_MEMCHR
 
