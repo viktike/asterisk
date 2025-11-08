@@ -946,6 +946,24 @@ static struct ast_codec amrwb = {
 	.smooth = 0,
 };
 
+static int gsm_efr_samples(struct ast_frame *frame)
+{
+	return 160 * (frame->datalen / 31);
+}
+
+static struct ast_codec gsm_efr = {
+	.name = "gsm-efr",
+	.description = "GSM-EFR",
+	.type = AST_MEDIA_TYPE_AUDIO,
+	.sample_rate = 8000,
+	.minimum_ms = 20,
+	.maximum_ms = 300,
+	.default_ms = 20,
+	.minimum_bytes = 31,
+	.samples_count = gsm_efr_samples,
+	.smooth = 1,
+};
+
 #define CODEC_REGISTER_AND_CACHE(codec) \
 	({ \
 		int __res_ ## __LINE__ = 0; \
@@ -977,6 +995,8 @@ static struct ast_codec amrwb = {
 int ast_codec_builtin_init(void)
 {
 	int res = 0;
+
+	res |= CODEC_REGISTER_AND_CACHE(gsm_efr);
 
 	res |= CODEC_REGISTER_AND_CACHE(amr);
 	res |= CODEC_REGISTER_AND_CACHE(amrwb);

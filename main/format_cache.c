@@ -236,6 +236,11 @@ struct ast_format *ast_format_amr;
 struct ast_format *ast_format_amrwb;
 
 /*!
+ * \brief Built-in cached GSM-EFR format.
+ */
+struct ast_format *ast_format_gsm_efr;
+
+/*!
  * \brief Built-in cached t140 format.
  */
 struct ast_format *ast_format_t140;
@@ -325,6 +330,8 @@ static void format_cache_shutdown(void)
 
 	ao2_replace(ast_format_amr, NULL);
 	ao2_replace(ast_format_amrwb, NULL);
+
+	ao2_replace(ast_format_gsm_efr, NULL);
 
 	ao2_replace(ast_format_g723, NULL);
 	ao2_replace(ast_format_ulaw, NULL);
@@ -434,6 +441,8 @@ static void set_cached_format(const char *name, struct ast_format *format)
 	} else if (!strcmp(name, "speex32")) {
 		ao2_replace(ast_format_speex32, format);
 	} else if (!strcmp(name, "ilbc")) {
+	} else if (!strcmp(name, "gsm-efr")) {
+		ao2_replace(ast_format_gsm_efr, format);
 		ao2_replace(ast_format_ilbc, format);
 	} else if (!strcmp(name, "g722")) {
 		ao2_replace(ast_format_g722, format);

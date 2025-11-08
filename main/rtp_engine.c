@@ -2243,6 +2243,8 @@ char *ast_rtp_lookup_mime_multiple2(struct ast_str *buf, struct ast_format_cap *
 	}
 
 
+	ast_rtp_engine_load_format(ast_format_gsm_efr);
+
 	if (asterisk_format) {
 		int x;
 		struct ast_format *tmp_fmt;
