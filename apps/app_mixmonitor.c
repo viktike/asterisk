@@ -49,6 +49,7 @@
 #include "asterisk/cli.h"
 #include "asterisk/app.h"
 #include "asterisk/channel.h"
+#include "asterisk/cel.h"
 #include "asterisk/autochan.h"
 #include "asterisk/manager.h"
 #include "asterisk/stasis.h"
@@ -1049,6 +1050,7 @@ static int launch_monitor_thread(struct ast_channel *chan, const char *filename,
 	struct mixmonitor *mixmonitor;
 	char postprocess2[1024] = "";
 	char *datastore_id = NULL;
+	struct ast_json *cel_event;
 
 	postprocess2[0] = 0;
 	/* If a post process system command is given attach it to the structure */
@@ -1186,6 +1188,30 @@ static int launch_monitor_thread(struct ast_channel *chan, const char *filename,
 		ast_audiohook_destroy(&mixmonitor->audiohook);
 		mixmonitor_free(mixmonitor);
 		return -1;
+	}
+
+	/* publish a CEL APP_MIXMONITOR_BEGIN event */
+	if (datastore_id) {
+		if (ast_strlen_zero(uid_channel_var)) {
+			cel_event = ast_json_pack("{ s: s, s: { s: s }}",
+				"event", "APP_MIXMONITOR_BEGIN",
+				"extra",
+					"mixmonid", datastore_id
+			);
+		} else {
+			cel_event = ast_json_pack("{ s: s, s: { s: s, s: s }}",
+				"event", "APP_MIXMONITOR_BEGIN",
+				"extra",
+					"mixmonid", datastore_id,
+					"chanvarname", uid_channel_var
+			);
+		}
+		if (cel_event) {
+			ast_cel_publish_event(chan, AST_CEL_MONITOR_BEGIN, cel_event);
+		} else {
+			ast_log(LOG_WARNING, "Unable to build json for app_mixmonitor MONITOR_BEGIN event on channel %s", ast_channel_name(chan));
+		}
+		ast_json_unref(cel_event);
 	}
 
 	ast_free(datastore_id);
@@ -1386,6 +1412,7 @@ static int stop_mixmonitor_full(struct ast_channel *chan, const char *data)
 	char *parse = "";
 	struct mixmonitor_ds *mixmonitor_ds;
 	const char *beep_id = NULL;
+	struct ast_json *cel_event;
 	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
 
 	AST_DECLARE_APP_ARGS(args,
@@ -1430,6 +1457,27 @@ static int stop_mixmonitor_full(struct ast_channel *chan, const char *data)
 	if (!ast_strlen_zero(mixmonitor_ds->beep_id)) {
 		beep_id = ast_strdupa(mixmonitor_ds->beep_id);
 	}
+
+	/* publish a CEL APP_MIXMONITOR_END event */
+	if (ast_strlen_zero(args.mixmonid)) {
+		cel_event = ast_json_pack("{ s: s, s: { s: s }}",
+			"event", "APP_MIXMONITOR_END",
+			"extra",
+				"mixmonid", "*"
+		);
+	} else {
+		cel_event = ast_json_pack("{ s: s, s: { s: s }}",
+			"event", "APP_MIXMONITOR_END",
+			"extra",
+				"mixmonid", args.mixmonid
+		);
+	}
+	if (cel_event) {
+		ast_cel_publish_event(chan, AST_CEL_MONITOR_END, cel_event);
+	} else {
+		ast_log(LOG_WARNING, "Unable to build json for app_mixmonitor MONITOR_END event on channel %s", ast_channel_name(chan));
+	}
+	ast_json_unref(cel_event);
 
 	ast_mutex_unlock(&mixmonitor_ds->lock);
 
@@ -1581,7 +1629,9 @@ static int manager_mute_mixmonitor(struct mansession *s, const struct message *m
 	const char *state = astman_get_header(m, "State");
 	const char *direction = astman_get_header(m,"Direction");
 	const char *mixmonitor_id = astman_get_header(m, "MixMonitorID");
-	int clearmute = 1, mutedcount = 0;
+	const char *subevent;
+	int clearmute = 1, mutedcount = 0, event;
+	struct ast_json *cel_event;
 	enum ast_audiohook_flags flag;
 	RAII_VAR(struct stasis_message *, stasis_message, NULL, ao2_cleanup);
 	RAII_VAR(struct ast_json *, stasis_message_blob, NULL, ast_json_unref);
@@ -1613,6 +1663,13 @@ static int manager_mute_mixmonitor(struct mansession *s, const struct message *m
 	}
 
 	clearmute = ast_false(state);
+	if (clearmute) {
+		event = AST_CEL_MONITOR_BEGIN;
+		subevent = "APP_MIXMONITOR_UNMUTE";
+	} else {
+		event = AST_CEL_MONITOR_END;
+		subevent = "APP_MIXMONITOR_MUTE";
+	}
 
 	c = ast_channel_get_by_name(name);
 	if (!c) {
@@ -1627,6 +1684,13 @@ static int manager_mute_mixmonitor(struct mansession *s, const struct message *m
 			astman_send_error(s, m, "Cannot set mute flag");
 			return AMI_SUCCESS;
 		}
+		cel_event = ast_json_pack("{ s: s, s: { s: s, s: s, s: s }}",
+			"event", subevent,
+			"extra",
+				"mixmonid", "*",
+				"actionid", id,
+				"direction", direction
+		);
 	} else {
 		if (mute_mixmonitor_instance(c, mixmonitor_id, flag, clearmute)) {
 			ast_channel_unref(c);
@@ -1634,8 +1698,20 @@ static int manager_mute_mixmonitor(struct mansession *s, const struct message *m
 			return AMI_SUCCESS;
 		}
 		mutedcount = 1;
+		cel_event = ast_json_pack("{ s: s, s: { s: s, s: s, s: s }}",
+			"event", subevent,
+			"extra",
+				"mixmonid", mixmonitor_id,
+				"actionid", id,
+				"direction", direction
+		);
 	}
-
+	if (cel_event) {
+		ast_cel_publish_event(c, event, cel_event);
+	} else {
+		ast_log(LOG_WARNING, "Unable to build json for app_mixmonitor %s event on channel %s", subevent, ast_channel_name(c));
+	}
+	ast_json_unref(cel_event);
 
 	stasis_message_blob = ast_json_pack("{s: s, s: b, s: s, s: i}",
 		"direction", direction,

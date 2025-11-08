@@ -40,6 +40,7 @@
 #include "asterisk/paths.h"	/* use ast_config_AST_MONITOR_DIR */
 #include "asterisk/lock.h"
 #include "asterisk/channel.h"
+#include "asterisk/cel.h"
 #include "asterisk/file.h"
 #include "asterisk/pbx.h"
 #include "asterisk/module.h"
@@ -299,12 +300,50 @@ static unsigned long seq = 0;
 */
 static int ast_monitor_set_state(struct ast_channel *chan, int state)
 {
+	struct ast_json *cel_event;
+	int event;
+	const char *subevent;
+
 	LOCK_IF_NEEDED(chan, 1);
 	if (!ast_channel_monitor(chan)) {
 		UNLOCK_IF_NEEDED(chan, 1);
 		return -1;
 	}
+
+	/* publish a CEL RES_MONITOR_(UN)PAUSE event */
+	switch (state) {
+		case AST_MONITOR_RUNNING:
+			{
+				event = AST_CEL_MONITOR_BEGIN;
+				subevent = "RES_MONITOR_UNPAUSE";
+				break;
+			}
+		case AST_MONITOR_PAUSED:
+			{
+				event = AST_CEL_MONITOR_END;
+				subevent = "RES_MONITOR_PAUSE";
+				break;
+			}
+		default:
+			ast_log(LOG_ERROR, "Unknown AST_MONITORING_STATE=%d on channel %s", state, ast_channel_name(chan));
+			UNLOCK_IF_NEEDED(chan, 1);
+			return -1;
+	}
+	cel_event = ast_json_pack("{ s: s, s: { s: s, s: s }}",
+		"event", subevent,
+		"extra",
+			"file", ast_channel_monitor(chan)->filename_base,
+			"format", ast_channel_monitor(chan)->format
+	);
+	if (cel_event) {
+		ast_cel_publish_event(chan, event, cel_event);
+	} else {
+		ast_log(LOG_WARNING, "Unable to build json for res_monitor %s event on channel %s", subevent, ast_channel_name(chan));
+	}
+	ast_json_unref(cel_event);
+
 	ast_channel_monitor(chan)->state = state;
+
 	UNLOCK_IF_NEEDED(chan, 1);
 	return 0;
 }
@@ -333,6 +372,7 @@ int AST_OPTIONAL_API_NAME(ast_monitor_start)(struct ast_channel *chan, const cha
 	if (!(ast_channel_monitor(chan))) {
 		struct ast_channel_monitor *monitor;
 		char *channel_name, *p;
+		struct ast_json *cel_event;
 
 		/* Create monitoring directory if needed */
 		ast_mkdir(ast_config_AST_MONITOR_DIR, 0777);
@@ -432,6 +472,21 @@ int AST_OPTIONAL_API_NAME(ast_monitor_start)(struct ast_channel *chan, const cha
 		ast_channel_outsmpl_set(chan, 0);
 		ast_channel_monitor_set(chan, monitor);
 		ast_monitor_set_state(chan, AST_MONITOR_RUNNING);
+
+		/* publish a CEL RES_MONITOR_BEGIN event */
+		cel_event = ast_json_pack("{ s: s, s: { s: s, s: s }}",
+			"event", "RES_MONITOR_BEGIN",
+			"extra",
+				"file", monitor->filename_base,
+				"format", monitor->format
+		);
+		if (cel_event) {
+			ast_cel_publish_event(chan, AST_CEL_MONITOR_BEGIN, cel_event);
+		} else {
+			ast_log(LOG_WARNING, "Unable to build json for res_monitor MONITOR_BEGIN event on channel %s", ast_channel_name(chan));
+		}
+		ast_json_unref(cel_event);
+
 		/* so we know this call has been monitored in case we need to bill for it or something */
 		pbx_builtin_setvar_helper(chan, "__MONITORED","true");
 
@@ -479,6 +534,7 @@ static const char *get_soxmix_format(const char *format)
 */
 int AST_OPTIONAL_API_NAME(ast_monitor_stop)(struct ast_channel *chan, int need_lock)
 {
+	struct ast_json *cel_event;
 	int delfiles = 0;
 	RAII_VAR(struct stasis_message *, message, NULL, ao2_cleanup);
 
@@ -557,6 +613,20 @@ int AST_OPTIONAL_API_NAME(ast_monitor_stop)(struct ast_channel *chan, int need_l
 		ast_free(ast_channel_monitor(chan)->format);
 		ast_free(ast_channel_monitor(chan));
 		ast_channel_monitor_set(chan, NULL);
+
+		/* publish a CEL RES_MONITOR_END event */
+		cel_event = ast_json_pack("{ s: s, s: { s: s, s: s }}",
+			"event", "RES_MONITOR_END",
+			"extra",
+				"file", ast_channel_monitor(chan)->filename_base,
+				"format", ast_channel_monitor(chan)->format
+		);
+		if (cel_event) {
+			ast_cel_publish_event(chan, AST_CEL_MONITOR_END, cel_event);
+		} else {
+			ast_log(LOG_WARNING, "Unable to build json for res_monitor MONITOR_END event on channel %s", ast_channel_name(chan));
+		}
+		ast_json_unref(cel_event);
 
 		message = ast_channel_blob_create_from_cache(ast_channel_uniqueid(chan),
 				ast_channel_monitor_stop_type(),

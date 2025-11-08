@@ -65,6 +65,8 @@ apps=dial,park
 ;  DTMF             -- A DTMF digit was processed: these events are dispatched at the
 ;                      end, when the button is released and the duration is present in
 ;                      the extra field
+;  MONITOR_BEGIN    -- A monitor instance started on the channel
+;  MONITOR_END      -- A monitor instance stopped on the channel
 ;
 ; Default value: none
 ;                (Track no events)

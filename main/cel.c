@@ -121,6 +121,8 @@
 						<enum name="STREAM_BEGIN"/>
 						<enum name="STREAM_END"/>
 						<enum name="DTMF"/>
+						<enum name="MONITOR_BEGIN"/>
+						<enum name="MONITOR_END"/>
 					</enumlist>
 					</description>
 				</configOption>
@@ -344,6 +346,8 @@ static const char * const cel_event_types[CEL_MAX_EVENT_IDS] = {
 	[AST_CEL_STREAM_BEGIN]     = "STREAM_BEGIN",
 	[AST_CEL_STREAM_END]       = "STREAM_END",
 	[AST_CEL_DTMF]             = "DTMF",
+	[AST_CEL_MONITOR_BEGIN]    = "MONITOR_BEGIN",
+	[AST_CEL_MONITOR_END]      = "MONITOR_END",
 };
 
 struct cel_backend {
@@ -1285,6 +1289,8 @@ static void cel_generic_cb(
 	switch (event_type) {
 	case AST_CEL_USER_DEFINED:
 	case AST_CEL_DTMF:
+	case AST_CEL_MONITOR_BEGIN:
+	case AST_CEL_MONITOR_END:
 	case AST_CEL_STREAM_BEGIN:
 		{
 			const char *event = ast_json_string_get(ast_json_object_get(event_details, "event"));
