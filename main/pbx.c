@@ -71,6 +71,7 @@
 #include "asterisk/stasis_channels.h"
 #include "asterisk/dial.h"
 #include "asterisk/vector.h"
+#include "asterisk/astdb.h"
 #include "pbx_private.h"
 
 /*!
@@ -545,6 +546,7 @@ static int remove_hintdevice(struct ast_hint *hint)
 		ao2_t_callback_data(hintdevices, OBJ_SEARCH_KEY | OBJ_UNLINK | OBJ_NODATA,
 			hintdevice_remove_cb, device, hint, "Remove device from container");
 		AST_VECTOR_REMOVE_UNORDERED(&hint->devices, 0);
+		ast_db_del("Devstate", device);
 		ast_free(device);
 	}
 
@@ -601,6 +603,8 @@ static int add_hintdevice(struct ast_hint *hint, const char *devicelist)
 		if (!device_name) {
 			return -1;
 		}
+
+		ast_db_put("Devstate", device_name, "Unavailable");
 
 		device = ao2_t_alloc(sizeof(*device) + devicelength, hintdevice_destroy,
 			"allocating a hintdevice structure");
@@ -3697,6 +3701,8 @@ static void device_state_cb(void *unused, struct stasis_subscription *sub, struc
 	device_name = strchr(type, '/');
 	if (virtual_device && (!device_name || (virtual_device < device_name))) {
 		device_name = virtual_device;
+	} else {
+		ast_db_put("Devstate", type, ast_devstate2str(dev_state->state));
 	}
 
 	/* Invalid device state name - not a virtual/custom device and not a real device */
