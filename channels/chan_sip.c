@@ -369,6 +369,54 @@
 			application is only available if TEST_FRAMEWORK is defined.</para>
 		</description>
 	</application>
+	<application name="SIPNotify" language="en_US">
+		<synopsis>
+			Send SIP NOTIFYs from dialplan.
+		</synopsis>
+		<syntax>
+			<parameter name="peer" required="false">
+				<para>The chan_sip peer name,
+				can be retrived with <literal>${CHANNEL(peername)}</literal>.
+				Defaults to the current channel.</para>
+			</parameter>
+			<parameter name="callid" required="false">
+				<para>When specified, send the NOTIFY in-dialog,
+				instead of creating a new dialog (Call-ID).
+				To retrive an existing dialog use the
+				<literal>${SIPCALLID}</literal> built-in variable.</para>
+				<para>When not set, the <literal>${NOTIFY_FROM}</literal>
+				variable can be used to set the user-part of the
+				From: and Contact: headers.</para>
+			</parameter>
+			<parameter name="header_name" required="false">
+				<para>Specify a custom SIP header.
+				Custom SIP headers are usually prefixed
+				with <literal>X-</literal>.</para>
+			</parameter>
+			<parameter name="header_value" required="false">
+				<para>The value of the previously specified
+				custom SIP header. The custom header will only
+				be present in the NOTIFY, when both name and
+				value are specified.</para>
+			</parameter>
+			<parameter name="content" required="false">
+				<para>Body of the NOTIFY</para>
+			</parameter>
+		</syntax>
+		<description>
+			<para>Send a <literal>SIP NOTIFY</literal> to a SIP peer.</para>
+			<para>Optionally specify a custom header.</para>
+			<variablelist>
+				<variable name="NOTIFYSTATUS">
+					<para>The result of the operation.</para>
+					<value name="SUCCESS" />
+					<value name="NOT_REGISTERED" />
+					<value name="INVALID_CALLID" />
+					<value name="ERROR" />
+				</variable>
+			</variablelist>
+		</description>
+	</application>
 	<function name="SIP_HEADER" language="en_US">
 		<synopsis>
 			Gets the specified SIP header from an incoming INVITE message.
@@ -685,6 +733,9 @@
 		</managerEventInstance>
 	</managerEvent>
  ***/
+
+#define CHAN_TECH "SIP"
+#define CHAN_PREFIX "sip/"
 
 static int log_level = -1;
 
@@ -15700,8 +15751,8 @@ static int manager_sipnotify(struct mansession *s, const struct message *m)
 		return 0;
 	}
 
-	if (!strncasecmp(channame, "sip/", 4)) {
-		channame += 4;
+	if (!strncasecmp(channame, CHAN_PREFIX, strlen(CHAN_PREFIX))) {
+		channame += strlen(CHAN_PREFIX);
 	}
 
 	/* check if Call-ID header is set */
@@ -15729,7 +15780,8 @@ static int manager_sipnotify(struct mansession *s, const struct message *m)
 			return 0;
 		}
 
-		if (create_addr(p, channame, NULL, 1)) {
+		set_socket_transport(&p->socket, 0);
+		if (create_addr_from_peer(p, sip_find_peer(channame, NULL, TRUE, FINDPEERS, FALSE, 0))) {
 			/* Maybe they're not registered, etc. */
 			dialog_unlink_all(p);
 			dialog_unref(p, "unref dialog inside for loop" );
@@ -15777,6 +15829,149 @@ static int manager_sipnotify(struct mansession *s, const struct message *m)
 
 	astman_send_ack(s, m, "Notify Sent");
 	ast_variables_destroy(vars);
+	return 0;
+}
+
+static int notify_exec(struct ast_channel *chan, const char *data)
+{
+	struct sip_pvt *sip_new = NULL;
+	struct sip_peer *p = NULL;
+	const struct ast_channel_tech *tech;
+	const char *from = NULL;
+	int ref = 0;
+	char *parse;
+	char *peer;
+	AST_DECLARE_APP_ARGS(args,
+			AST_APP_ARG(peer);
+			AST_APP_ARG(callid);
+			AST_APP_ARG(header_name);
+			AST_APP_ARG(header_value);
+			AST_APP_ARG(content);
+	);
+
+	parse = ast_strdupa(data);
+
+	AST_STANDARD_APP_ARGS(args, parse);
+
+	if (ast_strlen_zero(args.peer)) {
+		if(ast_strlen_zero(args.callid)){
+			ast_log(LOG_NOTICE, "Peer name or call-id for SIPNotify() not specified, trying to use the current calling channel...\n");
+
+			if (!chan) {
+				ast_log(LOG_ERROR, "There is no current calling channel for SIPNotify()!\n");
+				pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CALLID");
+				return -1;
+			}
+
+			tech = ast_channel_tech(chan);
+			if (strcmp(tech->type, CHAN_TECH) != 0) {
+				ast_log(LOG_WARNING, "The type of the current calling channel is not SIP, which is required for SIPNotify(%s)!\n", ast_channel_name(chan));
+				pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CALLID");
+				return 0;
+			}
+
+			sip_new = ast_channel_tech_pvt(chan);
+			if (!sip_new) {
+				ast_log(LOG_ERROR, "The call-id for the current calling channel cannot be retrived for SIPNotify(%s)!\n", ast_channel_name(chan));
+				pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CALLID");
+				return -1;
+			}
+
+			peer = ast_strdupa(sip_new->peername);
+		}
+	} else {
+		peer = ast_strdupa(args.peer);
+
+		if (!strncasecmp(peer, CHAN_PREFIX, strlen(CHAN_PREFIX))) {
+			peer += strlen(CHAN_PREFIX);
+		}
+	}
+
+	if(ast_strlen_zero(args.callid)){
+		if (!(sip_new = sip_alloc(NULL, NULL, 0, SIP_NOTIFY, NULL, 0))) {
+			ast_log(LOG_ERROR, "Unable to build sip pvt data for SIPNotify(): memory/socket error!\n");
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "ERROR");
+			return -1;
+		}
+		ref++;
+
+		from = pbx_builtin_getvar_helper(chan, "NOTIFY_FROM");
+		if(from != NULL){
+			ast_string_field_set(sip_new, fromuser, from);
+		}
+
+		set_socket_transport(&sip_new->socket, 0);
+		p = sip_find_peer(peer, NULL, TRUE, FINDPEERS, FALSE, 0);
+		if (!p) {
+			dialog_unlink_all(sip_new);
+			dialog_unref(sip_new, "unref dialog inside for loop" );
+			ast_log(LOG_WARNING, "Could not find peer for SIPNotify(%s), does the peer exist?\n", peer);
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "NOT_REGISTERED");
+			return 0;
+		}
+		if (create_addr_from_peer(sip_new, p)) {
+			/* Maybe they're not registered, etc. */
+			dialog_unlink_all(sip_new);
+			dialog_unref(sip_new, "unref dialog inside for loop" );
+			/* sip_destroy(sip_new); */
+			ast_log(LOG_WARNING, "Could not get address for SIPNotify(%s), is the endpoint registered?\n", peer);
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "NOT_REGISTERED");
+			return 0;
+		}
+
+		/* Notify is outgoing call */
+		ast_set_flag(&sip_new->flags[0], SIP_OUTGOING);
+		sip_notify_alloc(sip_new);
+	} else {
+		if (!sip_new) {
+			struct sip_pvt tmp_dialog = {
+				.callid = args.callid,
+			};
+			sip_new = ao2_find(dialogs, &tmp_dialog, OBJ_SEARCH_OBJECT);
+			ref++;
+		}
+		if (!sip_new) {
+			ast_log(LOG_ERROR, "Provided call-id: %s for SIPNotify() not found!\n", args.callid);
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CALLID");
+			return -1;
+		}
+
+		if (!(sip_new->notify)) {
+			sip_notify_alloc(sip_new);
+		}
+	}
+
+	/* Add the custom header */
+	if (!ast_strlen_zero(args.header_name) && !ast_strlen_zero(args.header_value)) {
+		sip_new->notify->headers = ast_variable_new(args.header_name, args.header_value, "");
+		ast_log(LOG_NOTICE, "SIPNotify(%s,%s,%s,%s) header added.\n", sip_new->peername, args.callid, args.header_name, args.header_value);
+	}
+
+	/* Set content */
+	if (!ast_strlen_zero(args.content)) {
+		ast_str_append(&sip_new->notify->content, 0, "\r\n");
+		ast_str_append(&sip_new->notify->content, 0, "%s", args.content);
+		ast_log(LOG_NOTICE, "NOTIFY body '%s' copied.\n", args.content);
+	}
+
+	/* Now that we have the peer's address, set our ip and change callid */
+	if (ast_strlen_zero(args.callid)) {
+		ast_sip_ouraddrfor(&sip_new->sa, &sip_new->ourip, sip_new);
+		build_via(sip_new);
+
+		change_callid_pvt(sip_new, NULL);
+
+		sip_scheddestroy(sip_new, SIP_TRANS_TIMEOUT);
+		transmit_invite(sip_new, SIP_NOTIFY, 0, 2, NULL);
+	} else {
+		sip_scheddestroy(sip_new, SIP_TRANS_TIMEOUT);
+		transmit_invite(sip_new, SIP_NOTIFY, 0, 1, NULL);
+	}
+	ast_log(LOG_NOTICE, "SIPNotify(%s,%s,%s,%s) sent.\n", sip_new->peername, args.callid, args.header_name, args.header_value);
+	if (ref > 0) {
+		dialog_unref(sip_new, "bump down the count of sip_new since we're done with it.");
+	}
+	pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "SUCCESS");
 	return 0;
 }
 
@@ -34054,6 +34249,7 @@ static struct ast_rtp_glue sip_rtp_glue = {
 static char *app_dtmfmode = "SIPDtmfMode";
 static char *app_sipaddheader = "SIPAddHeader";
 static char *app_sipremoveheader = "SIPRemoveHeader";
+static char *app_notify = "SIPNotify";
 #ifdef TEST_FRAMEWORK
 static char *app_sipsendcustominfo = "SIPSendCustomINFO";
 #endif
@@ -35654,6 +35850,7 @@ static int load_module(void)
 	ast_register_application_xml(app_dtmfmode, sip_dtmfmode);
 	ast_register_application_xml(app_sipaddheader, sip_addheader);
 	ast_register_application_xml(app_sipremoveheader, sip_removeheader);
+	ast_register_application_xml(app_notify, notify_exec);
 #ifdef TEST_FRAMEWORK
 	ast_register_application_xml(app_sipsendcustominfo, sip_sendcustominfo);
 #endif
@@ -35777,6 +35974,7 @@ static int unload_module(void)
 	ast_unregister_application(app_dtmfmode);
 	ast_unregister_application(app_sipaddheader);
 	ast_unregister_application(app_sipremoveheader);
+	ast_unregister_application(app_notify);
 #ifdef TEST_FRAMEWORK
 	ast_unregister_application(app_sipsendcustominfo);
 

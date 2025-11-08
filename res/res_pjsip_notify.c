@@ -38,6 +38,32 @@
 #include "asterisk/sorcery.h"
 
 /*** DOCUMENTATION
+	<application name="PJSIPContextNotify" language="en_US">
+		<synopsis>
+			Send SIP NOTIFYs from dialplan using a pjsip_notify.conf context.
+		</synopsis>
+		<syntax>
+			<parameter name="context" required="true">
+				<para>The [context] to use from pjsip_notify.conf</para>
+			</parameter>
+			<parameter name="endpoint" required="true">
+				<para>The destination PJSIP endpoint.</para>
+			</parameter>
+		</syntax>
+		<description>
+			<para>Send a <literal>SIP NOTIFY</literal>
+			to a PJSIP endpoint from a pjsip_notify.conf context.</para>
+			<variablelist>
+				<variable name="NOTIFYSTATUS">
+					<para>The result of the operation.</para>
+					<value name="SUCCESS" />
+					<value name="INVALID_CONTEXT" />
+					<value name="INVALID_ENDPOINT" />
+					<value name="ERROR" />
+				</variable>
+			</variablelist>
+		</description>
+	</application>
 	<manager name="PJSIPNotify" language="en_US">
 		<since>
 			<version>12.0.0</version>
@@ -1393,6 +1419,63 @@ static int app_notify(struct ast_channel *chan, const char *data)
 	return res;
 }
 
+/*! \brief Application entry point to send a SIP notify to an endpoint from pjsip_notify.conf */
+static int app_notify_exec(struct ast_channel *chan, const char *data)
+{
+	RAII_VAR(struct notify_cfg *, cfg, NULL, ao2_cleanup);
+	RAII_VAR(struct notify_option *, option, NULL, ao2_cleanup);
+	char *parse;
+	enum notify_result result;
+
+	AST_DECLARE_APP_ARGS(args,
+		AST_APP_ARG(type);
+		AST_APP_ARG(endpoint);
+	);
+
+	parse = ast_strdupa(data);
+
+	AST_STANDARD_APP_ARGS(args, parse);
+
+	if (ast_strlen_zero(args.type)) {
+		ast_log(LOG_ERROR, "Context from pjsip_notify is required!\n");
+		pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CONTEXT");
+		return 0;
+	}
+
+	cfg = ao2_global_obj_ref(globals);
+	if (!(option = notify_option_find(cfg->notify_options, args.type))) {
+		ast_log(LOG_ERROR, "Context '%s' in pjsip_notify.conf not found!\n", args.type);
+		pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_CONTEXT");
+		return 0;
+	}
+
+	if (ast_strlen_zero(args.endpoint)) {
+		ast_log(LOG_ERROR, "A PJSIP endpoint is required!\n");
+		pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_ENDPOINT");
+		return 0;
+	}
+
+	result = push_notify(args.endpoint, option, notify_cli_data_create);
+	switch(result) {
+		case INVALID_ENDPOINT:
+			ast_log(LOG_WARNING, "Unable to retrieve endpoint '%s'!\n", args.endpoint);
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "INVALID_ENDPOINT");
+			return 0;
+		case ALLOC_ERROR:
+			ast_log(LOG_ERROR, "Unable to allocate NOTIFY task data!\n");
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "ERROR");
+			return -1;
+		case TASK_PUSH_ERROR:
+			ast_log(LOG_ERROR, "Unable to push NOTIFY task!\n");
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "ERROR");
+			return -1;
+		default:
+			ast_log(LOG_NOTICE, "Pushed NOTIFY task, successfully queued!\n");
+			pbx_builtin_setvar_helper(chan, "NOTIFYSTATUS", "SUCCESS");
+			return 0;
+	}
+}
+
 static int load_module(void)
 {
 	if (aco_info_init(&notify_cfg)) {
@@ -1410,6 +1493,7 @@ static int load_module(void)
 	ast_cli_register_multiple(cli_options, ARRAY_LEN(cli_options));
 	ast_manager_register_xml("PJSIPNotify", EVENT_FLAG_SYSTEM, manager_notify);
 	ast_register_application_xml("PJSIPNotify", app_notify);
+	ast_register_application_xml("PJSIPContextNotify", app_notify_exec);
 
 	return AST_MODULE_LOAD_SUCCESS;
 }
@@ -1427,6 +1511,7 @@ static int unload_module(void)
 {
 	ast_manager_unregister("PJSIPNotify");
 	ast_unregister_application("PJSIPNotify");
+	ast_unregister_application("PJSIPContextNotify");
 	ast_cli_unregister_multiple(cli_options, ARRAY_LEN(cli_options));
 	aco_info_destroy(&notify_cfg);
 	ao2_global_obj_release(globals);
