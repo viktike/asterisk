@@ -47,10 +47,12 @@
  * \param chan channel to create type/data
  * \param app application you want to run
  * \param appdata data for application
+ * \param tm timeout in milliseconds
+ * \param callerid the displayed callerid name (not number)
  * \retval CLI_SUCCESS on success.
  * \retval CLI_SHOWUSAGE on failure.
 */
-static char *orig_app(int fd, const char *chan, const char *app, const char *appdata)
+static char *orig_app(int fd, const char *chan, const char *app, const char *appdata, int tm, const char *callerid)
 {
 	char *chantech;
 	char *chandata;
@@ -72,8 +74,8 @@ static char *orig_app(int fd, const char *chan, const char *app, const char *app
 		return CLI_FAILURE;
 	}
 	ast_format_cap_append(cap, ast_format_slin, 0);
-	ast_pbx_outgoing_app(chantech, cap, chandata, TIMEOUT * 1000, app, appdata,
-			&reason, AST_OUTGOING_NO_WAIT, NULL, NULL, NULL, NULL,
+	ast_pbx_outgoing_app(chantech, cap, chandata, tm, app, appdata,
+			&reason, AST_OUTGOING_NO_WAIT, NULL, callerid, NULL, NULL,
 			NULL, NULL);
 	ao2_ref(cap, -1);
 
@@ -85,10 +87,12 @@ static char *orig_app(int fd, const char *chan, const char *app, const char *app
  * \param fd file descriptor for cli
  * \param chan channel to create type/data
  * \param data contains exten\@context
+ * \param tm timeout in milliseconds
+ * \param callerid the displayed callerid name (not number)
  * \retval CLI_SUCCESS on success.
  * \retval CLI_SHOWUSAGE on failure.
 */
-static char *orig_exten(int fd, const char *chan, const char *data)
+static char *orig_exten(int fd, const char *chan, const char *data, int tm, const char *callerid)
 {
 	char *chantech;
 	char *chandata;
@@ -118,8 +122,8 @@ static char *orig_exten(int fd, const char *chan, const char *data)
 		return CLI_FAILURE;
 	}
 	ast_format_cap_append(cap, ast_format_slin, 0);
-	ast_pbx_outgoing_exten(chantech, cap, chandata, TIMEOUT * 1000, context,
-			exten, 1, &reason, AST_OUTGOING_NO_WAIT, NULL, NULL,
+	ast_pbx_outgoing_exten(chantech, cap, chandata, tm, context,
+			exten, 1, &reason, AST_OUTGOING_NO_WAIT, NULL, callerid,
 			NULL, NULL, NULL, 0, NULL);
 	ao2_ref(cap, -1);
 
@@ -137,6 +141,8 @@ static char *handle_orig(struct ast_cli_entry *e, int cmd, struct ast_cli_args *
 {
 	static const char * const choices[] = { "application", "extension", NULL };
 	char *res = NULL;
+	unsigned int timeout = TIMEOUT * 1000;
+
 	switch (cmd) {
 	case CLI_INIT:
 		e->command = "channel originate";
@@ -146,13 +152,13 @@ static char *handle_orig(struct ast_cli_entry *e, int cmd, struct ast_cli_args *
 			"the dialplan. This is similar to call files or the manager originate action.\n"
 			"Calls originated with this command are given a timeout of 30 seconds.\n\n"
 
-			"Usage1: channel originate <tech/data> application <appname> [appdata]\n"
+			"Usage1: channel originate <tech/data> application <appname> [appdata] [timeout [callerid]]\n"
 			"  This will originate a call between the specified channel tech/data and the\n"
 			"given application. Arguments to the application are optional. If the given\n"
 			"arguments to the application include spaces, all of the arguments to the\n"
 			"application need to be placed in quotation marks.\n\n"
 
-			"Usage2: channel originate <tech/data> extension [exten@][context]\n"
+			"Usage2: channel originate <tech/data> extension [exten@][context] [timeout [callerid]]\n"
 			"  This will originate a call between the specified channel tech/data and the\n"
 			"given extension. If no context is specified, the 'default' context will be\n"
 			"used. If no extension is given, the 's' extension will be used.\n";
@@ -172,9 +178,29 @@ static char *handle_orig(struct ast_cli_entry *e, int cmd, struct ast_cli_args *
 		return CLI_SHOWUSAGE;
 
 	if (!strcasecmp("application", a->argv[3])) {
-		res = orig_app(a->fd, a->argv[2], a->argv[4], a->argv[5]);
+                if (!ast_strlen_zero(a->argv[6])) {
+                        if (sscanf(a->argv[6], "%u", &timeout) != 1) {
+                                ast_log(LOG_NOTICE, "Invalid timeout: '%s'. Setting timeout to 30 seconds\n", a->argv[6]);
+                                timeout = TIMEOUT * 1000;
+                        }
+                }
+                if (!ast_strlen_zero(a->argv[7])) {
+                        res = orig_app(a->fd, a->argv[2], a->argv[4], a->argv[5], timeout, a->argv[7]);
+                } else {
+                        res = orig_app(a->fd, a->argv[2], a->argv[4], a->argv[5], timeout, NULL);
+                }
 	} else if (!strcasecmp("extension", a->argv[3])) {
-		res = orig_exten(a->fd, a->argv[2], a->argv[4]);
+		if (!ast_strlen_zero(a->argv[5])) {
+                        if (sscanf(a->argv[5], "%u", &timeout) != 1) {
+                                ast_log(LOG_NOTICE, "Invalid timeout: '%s'. Setting timeout to 30 seconds\n", a->argv[5]);
+                                timeout = TIMEOUT * 1000;
+                        }
+                }
+                if (!ast_strlen_zero(a->argv[6])) {
+                        res = orig_exten(a->fd, a->argv[2], a->argv[4], timeout, a->argv[6]);
+                } else {
+                        res = orig_exten(a->fd, a->argv[2], a->argv[4], timeout, NULL);
+                }
 	} else {
 		res = CLI_SHOWUSAGE;
 	}
