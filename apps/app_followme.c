@@ -134,6 +134,9 @@
 						<para>Playback the incoming status message prior to starting
 						the follow-me step(s)</para>
 					</option>
+					<option name="c">
+						<para>Don't play: press a button, accept first answered party, connect</para>
+					</option>
 				</optionlist>
 			</parameter>
 		</syntax>
@@ -247,6 +250,7 @@ enum {
 	FOLLOWMEFLAG_IGNORE_CONNECTEDLINE = (1 << 6),
 	FOLLOWMEFLAG_PREDIAL_CALLER = (1 << 7),
 	FOLLOWMEFLAG_PREDIAL_CALLEE = (1 << 8),
+	FOLLOWMEFLAG_NOMSG = (1 << 9),
 };
 
 enum {
@@ -267,6 +271,7 @@ AST_APP_OPTIONS(followme_opts, {
 	AST_APP_OPTION('N', FOLLOWMEFLAG_NOANSWER),
 	AST_APP_OPTION('n', FOLLOWMEFLAG_UNREACHABLEMSG),
 	AST_APP_OPTION('s', FOLLOWMEFLAG_STATUSMSG),
+	AST_APP_OPTION('c', FOLLOWMEFLAG_NOMSG),
 });
 
 static const char *featuredigittostr;
@@ -284,6 +289,7 @@ static char statusprompt[PATH_MAX] = "followme/status";
 static char sorryprompt[PATH_MAX] = "followme/sorry";
 static char connprompt[PATH_MAX] = "";
 
+int fmnomsg = 0;
 
 static AST_RWLIST_HEAD_STATIC(followmes, call_followme);
 AST_LIST_HEAD_NOLOCK(findme_user_listptr, findme_user);
@@ -727,12 +733,18 @@ static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_us
 								ast_channel_name(tmpuser->ochan), tpargs->namerecloc);
 							memset(tmpuser->yn, 0, sizeof(tmpuser->yn));
 							tmpuser->ynidx = 0;
-							if (!ast_streamfile(tmpuser->ochan, pressbuttonname, ast_channel_language(tmpuser->ochan)))
+
+
+							if (fmnomsg == 1) {
 								tmpuser->state = 3;
-							else {
-								ast_log(LOG_WARNING, "Unable to playback %s.\n", pressbuttonname);
-								clear_caller(tmpuser);
-								continue;
+							} else {
+								if (!ast_streamfile(tmpuser->ochan, pressbuttonname, ast_channel_language(tmpuser->ochan)))
+									tmpuser->state = 3;
+								else {
+									ast_log(LOG_WARNING, "Unable to playback %s.\n", pressbuttonname);
+									clear_caller(tmpuser);
+									continue;
+								}
 							}
 						}
 						break;
@@ -741,11 +753,15 @@ static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_us
 							ast_channel_name(tmpuser->ochan));
 						memset(tmpuser->yn, 0, sizeof(tmpuser->yn));
 						tmpuser->ynidx = 0;
-						if (!ast_streamfile(tmpuser->ochan, pressbuttonname, ast_channel_language(tmpuser->ochan))) {
+						if (fmnomsg == 1) {
 							tmpuser->state = 3;
 						} else {
-							clear_caller(tmpuser);
-							continue;
+							if (!ast_streamfile(tmpuser->ochan, pressbuttonname, ast_channel_language(tmpuser->ochan))) {
+								tmpuser->state = 3;
+							} else {
+								clear_caller(tmpuser);
+								continue;
+							}
 						}
 						break;
 					case 3:
@@ -966,6 +982,14 @@ static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_us
 						ast_debug(1, "Dunno what to do with control type %d from %s\n",
 							f->subclass.integer, ast_channel_name(winner));
 						break;
+					}
+				}
+				if (fmnomsg == 1) {
+					if(tmpuser && tmpuser->state == 3){
+						if (ast_channel_stream(winner))
+							ast_stopstream(winner);
+						ast_frfree(f);
+						return tmpuser->ochan;
 					}
 				}
 				if (tmpuser && tmpuser->state == 3 && f->frametype == AST_FRAME_DTMF) {
@@ -1437,6 +1461,12 @@ static int app_exec(struct ast_channel *chan, const char *data)
 		}
 	}
 	ast_mutex_unlock(&f->lock);
+
+	if (ast_test_flag(&targs->followmeflags, FOLLOWMEFLAG_NOMSG)) {
+		fmnomsg = 1;
+	} else {
+		fmnomsg = 0;
+	}
 
 	/* PREDIAL: Preprocess any callee gosub arguments. */
 	if (ast_test_flag(&targs->followmeflags, FOLLOWMEFLAG_PREDIAL_CALLEE)
