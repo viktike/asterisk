@@ -599,6 +599,7 @@ AST_EXT_LIB_SETUP([NEWT], [newt], [newt])
 AST_EXT_LIB_SETUP([OGG], [OGG], [ogg])
 AST_EXT_LIB_SETUP([OPENR2], [MFR2], [openr2])
 AST_EXT_LIB_SETUP([OPUS], [Opus], [opus])
+AST_EXT_LIB_SETUP([OPUSENC], [Opusenc], [opusenc])
 AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
 AST_EXT_LIB_SETUP([FAAC], [Faac], [faac])
 AST_EXT_LIB_SETUP([HIREDIS], [hiredis], [hiredis])
@@ -2662,6 +2663,7 @@ AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 
 AST_EXT_LIB_CHECK([OPUS], [opus], [opus_encoder_create], [opus/opus.h])
 
+
 AST_EXT_LIB_CHECK([AMR_NB], [opencore-amrnb], [Encoder_Interface_init], [opencore-amrnb/interf_enc.h])
 AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amrwb/dec_if.h])
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
@@ -2672,6 +2674,7 @@ __opus_include=${OPUS_INCLUDE}
 if test -z "$__opus_include" -o x"$__opus_include" = x" " ; then
 	__opus_include=-I/usr/include/opus
 fi
+AST_PKG_CONFIG_CHECK(OPUSENC, libopusenc)
 AST_EXT_LIB_CHECK([OPUSFILE], [opusfile], [op_open_callbacks], [opus/opusfile.h], [], [$__opus_include])
 
 for ver in ${LUA_VERSIONS:-5.4 5.3 5.2 5.1}; do
