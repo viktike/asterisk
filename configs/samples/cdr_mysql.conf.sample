@@ -1,0 +1,12 @@
+[global]
+;dbname = asterisk_log
+;user = asterisk_cdr
+;password = supersecretpassword
+;charset = utf8
+;table = cdr
+;;timezone = UTC
+;;compat = no
+;sock = /var/lib/mysql/mysql.sock
+;hostname = 
+;port = 3306
+
