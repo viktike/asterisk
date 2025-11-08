@@ -35,6 +35,7 @@
 	<depend type="module">res_ari</depend>
 	<depend type="module">res_ari_model</depend>
 	<depend type="module">res_stasis</depend>
+	<depend type="module">res_stasis_amqp</depend>
 	<support_level>core</support_level>
  ***/
 
@@ -43,7 +44,7 @@
 #include "asterisk/app.h"
 #include "asterisk/module.h"
 #include "asterisk/stasis_app.h"
-#include "resource_amqp.h"
+#include "resource_amqp/resource_amqp.h"
 #if defined(AST_DEVMODE)
 #include "ari/ari_model_validators.h"
 #endif
@@ -216,5 +217,5 @@ AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_DEFAULT, "RESTful API module - AMQ
 	.support_level = AST_MODULE_SUPPORT_CORE,
 	.load = load_module,
 	.unload = unload_module,
-	.requires = "res_ari,res_ari_model,res_stasis",
+	.requires = "res_ari,res_ari_model,res_stasis,res_stasis_amqp",
 );

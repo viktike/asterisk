@@ -27,7 +27,7 @@
  */
 
 /*** MODULEINFO
-	<depend>res_stasis_amqp</depend>
+	<depend>res_amqp</depend>
 	<defaultenabled>no</defaultenabled>
 	<support_level>extended</support_level>
  ***/

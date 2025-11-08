@@ -38,6 +38,7 @@
 /*** MODULEINFO
 	<defaultenabled>yes</defaultenabled>
 	<depend>memcached</depend>
+	<depend>memcachedutil</depend>
 	<support_level>core</support_level>
 ***/
 

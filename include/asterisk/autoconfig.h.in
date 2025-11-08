@@ -535,6 +535,9 @@
 /* Define to 1 if you have the memcached library. */
 #undef HAVE_MEMCACHED
 
+/* Define to 1 if you have the memcachedutil library. */
+#undef HAVE_MEMCACHEDUTIL
+
 /* Define to 1 if you have the `memchr' function. */
 #undef HAVE_MEMCHR
 

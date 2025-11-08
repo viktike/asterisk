@@ -1059,6 +1059,10 @@ PBX_RABBITMQ
 RABBITMQ_DIR
 RABBITMQ_INCLUDE
 RABBITMQ_LIB
+PBX_MEMCACHEDUTIL
+MEMCACHEDUTIL_DIR
+MEMCACHEDUTIL_INCLUDE
+MEMCACHEDUTIL_LIB
 PBX_MEMCACHED
 MEMCACHED_DIR
 MEMCACHED_INCLUDE
@@ -1505,6 +1509,7 @@ with_opusfile
 with_faac
 with_hiredis
 with_memcached
+with_memcachedutil
 with_rabbitmq
 with_faad
 with_cjson
@@ -2292,6 +2297,8 @@ Optional Packages:
   --with-faac=PATH        use Faac files in PATH
   --with-hiredis=PATH     use hiredis files in PATH
   --with-memcached=PATH   use memcached files in PATH
+  --with-memcachedutil=PATH
+                          use memcachedutil files in PATH
   --with-rabbitmq=PATH    use rabbitmq files in PATH
   --with-faad=PATH        use Faad files in PATH
   --with-cjson=PATH       use cJSON files in PATH
@@ -23701,6 +23708,39 @@ fi
 
 
 
+    MEMCACHEDUTIL_DESCRIP="memcachedutil"
+    MEMCACHEDUTIL_OPTION="memcachedutil"
+    PBX_MEMCACHEDUTIL=0
+
+# Check whether --with-memcachedutil was given.
+if test ${with_memcachedutil+y}
+then :
+  withval=$with_memcachedutil;
+	case ${withval} in
+	n|no)
+	USE_MEMCACHEDUTIL=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_MEMCACHEDUTIL=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} MEMCACHEDUTIL"
+	;;
+	*)
+	MEMCACHEDUTIL_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} MEMCACHEDUTIL"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     RABBITMQ_DESCRIP="rabbitmq"
     RABBITMQ_OPTION="rabbitmq"
     PBX_RABBITMQ=0
@@ -43112,6 +43152,102 @@ fi
          PBX_MEMCACHED=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_MEMCACHED 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+if test "x${PBX_MEMCACHEDUTIL}" != "x1" -a "${USE_MEMCACHEDUTIL}" != "no"; then
+   pbxlibdir=""
+   # if --with-MEMCACHEDUTIL=DIR has been specified, use it.
+   if test "x${MEMCACHEDUTIL_DIR}" != "x"; then
+      if test -d ${MEMCACHEDUTIL_DIR}/lib; then
+         pbxlibdir="-L${MEMCACHEDUTIL_DIR}/lib"
+      else
+         pbxlibdir="-L${MEMCACHEDUTIL_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} -I/usr/include/libmemcachedutil-1.0"
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for memcached_pool in -lmemcachedutil" >&5
+printf %s "checking for memcached_pool in -lmemcachedutil... " >&6; }
+if test ${ac_cv_lib_memcachedutil_memcached_pool+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmemcachedutil ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char memcached_pool ();
+int
+main (void)
+{
+return memcached_pool ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_memcachedutil_memcached_pool=yes
+else $as_nop
+  ac_cv_lib_memcachedutil_memcached_pool=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_memcachedutil_memcached_pool" >&5
+printf "%s\n" "$ac_cv_lib_memcachedutil_memcached_pool" >&6; }
+if test "x$ac_cv_lib_memcachedutil_memcached_pool" = xyes
+then :
+  AST_MEMCACHEDUTIL_FOUND=yes
+else $as_nop
+  AST_MEMCACHEDUTIL_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_MEMCACHEDUTIL_FOUND}" = "yes"; then
+      MEMCACHEDUTIL_LIB="${pbxlibdir} -lmemcachedutil "
+      # if --with-MEMCACHEDUTIL=DIR has been specified, use it.
+      if test "x${MEMCACHEDUTIL_DIR}" != "x"; then
+         MEMCACHEDUTIL_INCLUDE="-I${MEMCACHEDUTIL_DIR}/include"
+      fi
+      MEMCACHEDUTIL_INCLUDE="${MEMCACHEDUTIL_INCLUDE} -I/usr/include/libmemcachedutil-1.0"
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${MEMCACHEDUTIL_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "libmemcachedutil-1.0/pool.h" "ac_cv_header_libmemcachedutil_1_0_pool_h" "$ac_includes_default"
+if test "x$ac_cv_header_libmemcachedutil_1_0_pool_h" = xyes
+then :
+  MEMCACHEDUTIL_HEADER_FOUND=1
+else $as_nop
+  MEMCACHEDUTIL_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${MEMCACHEDUTIL_HEADER_FOUND}" = "x0" ; then
+         MEMCACHEDUTIL_LIB=""
+         MEMCACHEDUTIL_INCLUDE=""
+      else
+
+         PBX_MEMCACHEDUTIL=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_MEMCACHEDUTIL 1
 _ACEOF
 
       fi
