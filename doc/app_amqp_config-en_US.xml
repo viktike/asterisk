@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE docs SYSTEM "appdocsxml.dtd">
+<docs xmlns:xi="http://www.w3.org/2001/XInclude">
+	<application name="PublishAMQP" language="en_US">
+		<synopsis>
+			Publish a message to a Rabbit Message Queue
+		</synopsis>
+		<syntax>
+			<parameter name="connection" required="true"/>
+			<parameter name="queue" required="true"/>
+			<parameter name="message" required="true"/>
+			<parameter name="exchange" required="false"/>
+			<parameter name="options" required="false">
+				<optionlist>
+					<option name="c">
+						<argument name="content-type" required="true" />
+						<para>Set the content type (mime type string)</para>
+					</option>
+					<option name="d">
+						<argument name="delivery-mode" required="true" />
+						<para>Set the delivery mode (integer)</para>
+					</option>
+				</optionlist>
+			</parameter>
+		</syntax>
+		<description>
+			<para>Sets the following channel variable:</para>
+			<variablelist>
+				<variable name="AMQPSTATUS">
+					<para>The result of the publish operation.</para>
+					<value name="SUCCESS" />
+					<value name="MISSING" />
+					<value name="INVALID" />
+					<value name="FAILURE" />
+				</variable>
+			</variablelist>
+		</description>
+	</application>
+</docs>

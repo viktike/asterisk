@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE docs SYSTEM "appdocsxml.dtd">
+<docs xmlns:xi="http://www.w3.org/2001/XInclude">
+	<configInfo name="res_stasis_amqp" language="en_US">
+		<synopsis>Stasis to AMQP Backend</synopsis>
+		<configFile name="stasis_amqp.conf">
+			<configObject name="global">
+				<synopsis>Global configuration settings</synopsis>
+				<configOption name="connection">
+					<synopsis>Name of the connection from amqp.conf to use</synopsis>
+					<description>
+						<para>Specifies the name of the connection from amqp.conf to use</para>
+					</description>
+				</configOption>
+				<configOption name="exchange">
+					<synopsis>Name of the exchange to post to</synopsis>
+					<description>
+						<para>Defaults to empty string</para>
+					</description>
+				</configOption>
+				<configOption name="queue">
+					<synopsis>Name of the queue to post to</synopsis>
+					<description>
+						<para>Defaults to asterisk_cdr</para>
+					</description>
+				</configOption>
+				<configOption name="publish_ami_events">
+					<synopsis>Whether or not ami events should be published</synopsis>
+					<description>
+						<para>Defaults to "yes"</para>
+					</description>
+				</configOption>
+				<configOption name="publish_channel_events">
+					<synopsis>Whether or not channel events should be published</synopsis>
+					<description>
+						<para>Defaults to "yes"</para>
+					</description>
+				</configOption>
+				<configOption name="exclude_events">
+					<synopsis>Exclude an optional comma-separated list of event name from any source (ami, stasis app, stasis channel)</synopsis>
+					<description>
+						<para>Defaults to empty list</para>
+					</description>
+				</configOption>
+				<configOption name="include_channelvarset_events">
+					<synopsis>Include an optional comma-separated list of ChannelVarset variable. If empty, all ChannelVarset events are included</synopsis>
+					<description>
+						<para>Defaults to empty list</para>
+					</description>
+				</configOption>
+			</configObject>
+		</configFile>
+	</configInfo>
+</docs>

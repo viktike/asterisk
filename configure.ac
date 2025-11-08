@@ -600,6 +600,7 @@ AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
 AST_EXT_LIB_SETUP([FAAC], [Faac], [faac])
 AST_EXT_LIB_SETUP([HIREDIS], [hiredis], [hiredis])
 AST_EXT_LIB_SETUP([MEMCACHED], [memcached], [memcached])
+AST_EXT_LIB_SETUP([RABBITMQ], [rabbitmq], [rabbitmq])
 AST_EXT_LIB_SETUP([FAAD], [Faad], [faad])
 AST_EXT_LIB_SETUP([CJSON], [cJSON], [cjson])
 AST_EXT_LIB_SETUP([OSPTK], [OSP Toolkit], [osptk])
@@ -2650,6 +2651,7 @@ AST_EXT_LIB_CHECK([FAAD], [faad], [NeAACDecOpen], [neaacdec.h])
 
 AST_EXT_LIB_CHECK([HIREDIS], [hiredis], [redisReaderCreate], [hiredis/hiredis.h])
 AST_EXT_LIB_CHECK([MEMCACHED], [memcached], [memcached_create], [libmemcached/memcached.h])
+AST_EXT_LIB_CHECK([RABBITMQ], [rabbitmq], [amqp_version], [rabbitmq-c/amqp.h])
 
 AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 
