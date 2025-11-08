@@ -755,6 +755,14 @@ PBX_VORBIS
 VORBIS_DIR
 VORBIS_INCLUDE
 VORBIS_LIB
+PBX_MONGOC
+MONGOC_DIR
+MONGOC_INCLUDE
+MONGOC_LIB
+PBX_BSON
+BSON_DIR
+BSON_INCLUDE
+BSON_LIB
 PBX_UNIXODBC
 UNIXODBC_DIR
 UNIXODBC_INCLUDE
@@ -1510,6 +1518,8 @@ with_timerfd
 with_tonezone
 with_unbound
 with_unixodbc
+with_bson_1_0
+with_mongoc_1_0
 with_vorbis
 with_x11
 with_z
@@ -2293,6 +2303,8 @@ Optional Packages:
   --with-tonezone=PATH    use tonezone files in PATH
   --with-unbound=PATH     use unbound files in PATH
   --with-unixodbc=PATH    use unixODBC files in PATH
+  --with-bson-1.0=PATH    use bson-1.0 files in PATH
+  --with-mongoc-1.0=PATH  use mongoc-1.0 files in PATH
   --with-vorbis=PATH      use Vorbis files in PATH
   --with-x11=PATH         use X11 files in PATH
   --with-z=PATH           use zlib compression files in PATH
@@ -25100,6 +25112,72 @@ fi
 
 
 
+    BSON_DESCRIP="bson-1.0"
+    BSON_OPTION="bson-1.0"
+    PBX_BSON=0
+
+# Check whether --with-bson-1.0 was given.
+if test ${with_bson_1_0+y}
+then :
+  withval=$with_bson_1_0;
+	case ${withval} in
+	n|no)
+	USE_BSON=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_BSON=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} BSON"
+	;;
+	*)
+	BSON_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} BSON"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    MONGOC_DESCRIP="mongoc-1.0"
+    MONGOC_OPTION="mongoc-1.0"
+    PBX_MONGOC=0
+
+# Check whether --with-mongoc-1.0 was given.
+if test ${with_mongoc_1_0+y}
+then :
+  withval=$with_mongoc_1_0;
+	case ${withval} in
+	n|no)
+	USE_MONGOC=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_MONGOC=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} MONGOC"
+	;;
+	*)
+	MONGOC_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} MONGOC"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     VORBIS_DESCRIP="Vorbis"
     VORBIS_OPTION="vorbis"
     PBX_VORBIS=0
@@ -44238,6 +44316,200 @@ if test "${PBX_SQLITE3}" != 1; then
 	as_fn_error $? "*** Please install the SQLite3 development package." "$LINENO" 5
 	exit 1
 fi
+
+# for ast_mongo
+
+if test "x${PBX_BSON}" != "x1" -a "${USE_BSON}" != "no"; then
+   pbxlibdir=""
+   # if --with-BSON=DIR has been specified, use it.
+   if test "x${BSON_DIR}" != "x"; then
+      if test -d ${BSON_DIR}/lib; then
+         pbxlibdir="-L${BSON_DIR}/lib"
+      else
+         pbxlibdir="-L${BSON_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} -I/usr/include/libbson-1.0"
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for bson_init in -lbson-1.0" >&5
+printf %s "checking for bson_init in -lbson-1.0... " >&6; }
+if test ${ac_cv_lib_bson_1_0_bson_init+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbson-1.0 ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char bson_init ();
+int
+main (void)
+{
+return bson_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_bson_1_0_bson_init=yes
+else $as_nop
+  ac_cv_lib_bson_1_0_bson_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_bson_1_0_bson_init" >&5
+printf "%s\n" "$ac_cv_lib_bson_1_0_bson_init" >&6; }
+if test "x$ac_cv_lib_bson_1_0_bson_init" = xyes
+then :
+  AST_BSON_FOUND=yes
+else $as_nop
+  AST_BSON_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_BSON_FOUND}" = "yes"; then
+      BSON_LIB="${pbxlibdir} -lbson-1.0 "
+      # if --with-BSON=DIR has been specified, use it.
+      if test "x${BSON_DIR}" != "x"; then
+         BSON_INCLUDE="-I${BSON_DIR}/include"
+      fi
+      BSON_INCLUDE="${BSON_INCLUDE} -I/usr/include/libbson-1.0"
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${BSON_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "libbson-1.0/bson.h" "ac_cv_header_libbson_1_0_bson_h" "$ac_includes_default"
+if test "x$ac_cv_header_libbson_1_0_bson_h" = xyes
+then :
+  BSON_HEADER_FOUND=1
+else $as_nop
+  BSON_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${BSON_HEADER_FOUND}" = "x0" ; then
+         BSON_LIB=""
+         BSON_INCLUDE=""
+      else
+
+         PBX_BSON=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_BSON 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+if test "x${PBX_MONGOC}" != "x1" -a "${USE_MONGOC}" != "no"; then
+   pbxlibdir=""
+   # if --with-MONGOC=DIR has been specified, use it.
+   if test "x${MONGOC_DIR}" != "x"; then
+      if test -d ${MONGOC_DIR}/lib; then
+         pbxlibdir="-L${MONGOC_DIR}/lib"
+      else
+         pbxlibdir="-L${MONGOC_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0"
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for mongoc_init in -lmongoc-1.0" >&5
+printf %s "checking for mongoc_init in -lmongoc-1.0... " >&6; }
+if test ${ac_cv_lib_mongoc_1_0_mongoc_init+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmongoc-1.0 ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char mongoc_init ();
+int
+main (void)
+{
+return mongoc_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_mongoc_1_0_mongoc_init=yes
+else $as_nop
+  ac_cv_lib_mongoc_1_0_mongoc_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mongoc_1_0_mongoc_init" >&5
+printf "%s\n" "$ac_cv_lib_mongoc_1_0_mongoc_init" >&6; }
+if test "x$ac_cv_lib_mongoc_1_0_mongoc_init" = xyes
+then :
+  AST_MONGOC_FOUND=yes
+else $as_nop
+  AST_MONGOC_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_MONGOC_FOUND}" = "yes"; then
+      MONGOC_LIB="${pbxlibdir} -lmongoc-1.0 "
+      # if --with-MONGOC=DIR has been specified, use it.
+      if test "x${MONGOC_DIR}" != "x"; then
+         MONGOC_INCLUDE="-I${MONGOC_DIR}/include"
+      fi
+      MONGOC_INCLUDE="${MONGOC_INCLUDE} -I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0"
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${MONGOC_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "libmongoc-1.0/mongoc.h" "ac_cv_header_libmongoc_1_0_mongoc_h" "$ac_includes_default"
+if test "x$ac_cv_header_libmongoc_1_0_mongoc_h" = xyes
+then :
+  MONGOC_HEADER_FOUND=1
+else $as_nop
+  MONGOC_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${MONGOC_HEADER_FOUND}" = "x0" ; then
+         MONGOC_LIB=""
+         MONGOC_INCLUDE=""
+      else
+
+         PBX_MONGOC=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_MONGOC 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
 
 # Find crypt support
 # * -lcrypt on *NIX

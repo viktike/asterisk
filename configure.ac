@@ -681,6 +681,8 @@ AST_EXT_LIB_SETUP([TIMERFD], [timerfd], [timerfd])
 AST_EXT_LIB_SETUP([TONEZONE], [tonezone], [tonezone])
 AST_EXT_LIB_SETUP([UNBOUND], [unbound], [unbound])
 AST_EXT_LIB_SETUP([UNIXODBC], [unixODBC], [unixodbc])
+AST_EXT_LIB_SETUP([BSON], [bson-1.0], [bson-1.0])
+AST_EXT_LIB_SETUP([MONGOC], [mongoc-1.0], [mongoc-1.0])
 AST_EXT_LIB_SETUP([VORBIS], [Vorbis], [vorbis])
 AST_EXT_LIB_SETUP([X11], [X11], [x11])
 AST_EXT_LIB_SETUP([ZLIB], [zlib compression], [z])
@@ -2716,6 +2718,10 @@ if test "${PBX_SQLITE3}" != 1; then
 	AC_MSG_ERROR(*** Please install the SQLite3 development package.)
 	exit 1
 fi
+
+# for ast_mongo
+AST_EXT_LIB_CHECK([BSON], [bson-1.0], [bson_init], [libbson-1.0/bson.h], [], [-I/usr/include/libbson-1.0])
+AST_EXT_LIB_CHECK([MONGOC], [mongoc-1.0], [mongoc_init], [libmongoc-1.0/mongoc.h], [], [-I/usr/include/libbson-1.0 -I/usr/include/libmongoc-1.0])
 
 # Find crypt support
 # * -lcrypt on *NIX

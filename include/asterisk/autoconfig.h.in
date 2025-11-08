@@ -134,6 +134,9 @@
    */
 #undef HAVE_BRIDGES_BRIDGE_SOFTMIX_INCLUDE_HRIRS_H
 
+/* Define to 1 if you have the bson-1.0 library. */
+#undef HAVE_BSON
+
 /* Define to 1 if byteswap.h macros are available. */
 #undef HAVE_BYTESWAP_H
 
@@ -546,6 +549,9 @@
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
+
+/* Define to 1 if you have the mongoc-1.0 library. */
+#undef HAVE_MONGOC
 
 /* Define if your system has the MSG_NOSIGNAL headers. */
 #undef HAVE_MSG_NOSIGNAL
