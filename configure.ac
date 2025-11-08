@@ -599,6 +599,7 @@ AST_EXT_LIB_SETUP([OPUS], [Opus], [opus])
 AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
 AST_EXT_LIB_SETUP([FAAC], [Faac], [faac])
 AST_EXT_LIB_SETUP([FAAD], [Faad], [faad])
+AST_EXT_LIB_SETUP([CJSON], [cJSON], [cjson])
 AST_EXT_LIB_SETUP([OSPTK], [OSP Toolkit], [osptk])
 AST_EXT_LIB_SETUP([PGSQL], [PostgreSQL], [postgres])
 AST_EXT_LIB_SETUP([BEANSTALK], [Beanstalk Job Queue], [beanstalk])
@@ -2642,6 +2643,8 @@ AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
 
 AST_EXT_LIB_CHECK([FAAC], [faac], [faacEncOpen], [faac.h])
 AST_EXT_LIB_CHECK([FAAD], [faad], [NeAACDecOpen], [neaacdec.h])
+
+AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 
 AST_EXT_LIB_CHECK([OPUS], [opus], [opus_encoder_create], [opus/opus.h])
 # opusfile.h includes <opus_multistream.h> so we need to make sure that

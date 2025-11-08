@@ -1039,6 +1039,10 @@ PBX_OSPTK
 OSPTK_DIR
 OSPTK_INCLUDE
 OSPTK_LIB
+PBX_CJSON
+CJSON_DIR
+CJSON_INCLUDE
+CJSON_LIB
 PBX_FAAD
 FAAD_DIR
 FAAD_INCLUDE
@@ -1480,6 +1484,7 @@ with_opus
 with_opusfile
 with_faac
 with_faad
+with_cjson
 with_osptk
 with_postgres
 with_beanstalk
@@ -2261,6 +2266,7 @@ Optional Packages:
   --with-opusfile=PATH    use Opusfile files in PATH
   --with-faac=PATH        use Faac files in PATH
   --with-faad=PATH        use Faad files in PATH
+  --with-cjson=PATH       use cJSON files in PATH
   --with-osptk=PATH       use OSP Toolkit files in PATH
   --with-postgres=PATH    use PostgreSQL files in PATH
   --with-beanstalk=PATH   use Beanstalk Job Queue files in PATH
@@ -23632,6 +23638,39 @@ fi
 
 
 
+    CJSON_DESCRIP="cJSON"
+    CJSON_OPTION="cjson"
+    PBX_CJSON=0
+
+# Check whether --with-cjson was given.
+if test ${with_cjson+y}
+then :
+  withval=$with_cjson;
+	case ${withval} in
+	n|no)
+	USE_CJSON=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_CJSON=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} CJSON"
+	;;
+	*)
+	CJSON_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} CJSON"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     OSPTK_DESCRIP="OSP Toolkit"
     OSPTK_OPTION="osptk"
     PBX_OSPTK=0
@@ -42685,6 +42724,103 @@ fi
          PBX_FAAD=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_FAAD 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_CJSON}" != "x1" -a "${USE_CJSON}" != "no"; then
+   pbxlibdir=""
+   # if --with-CJSON=DIR has been specified, use it.
+   if test "x${CJSON_DIR}" != "x"; then
+      if test -d ${CJSON_DIR}/lib; then
+         pbxlibdir="-L${CJSON_DIR}/lib"
+      else
+         pbxlibdir="-L${CJSON_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for cJSON_Version in -lcjson" >&5
+printf %s "checking for cJSON_Version in -lcjson... " >&6; }
+if test ${ac_cv_lib_cjson_cJSON_Version+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcjson ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char cJSON_Version ();
+int
+main (void)
+{
+return cJSON_Version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_cjson_cJSON_Version=yes
+else $as_nop
+  ac_cv_lib_cjson_cJSON_Version=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cjson_cJSON_Version" >&5
+printf "%s\n" "$ac_cv_lib_cjson_cJSON_Version" >&6; }
+if test "x$ac_cv_lib_cjson_cJSON_Version" = xyes
+then :
+  AST_CJSON_FOUND=yes
+else $as_nop
+  AST_CJSON_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_CJSON_FOUND}" = "yes"; then
+      CJSON_LIB="${pbxlibdir} -lcjson "
+      # if --with-CJSON=DIR has been specified, use it.
+      if test "x${CJSON_DIR}" != "x"; then
+         CJSON_INCLUDE="-I${CJSON_DIR}/include"
+      fi
+      CJSON_INCLUDE="${CJSON_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${CJSON_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "cjson/cJSON.h" "ac_cv_header_cjson_cJSON_h" "$ac_includes_default"
+if test "x$ac_cv_header_cjson_cJSON_h" = xyes
+then :
+  CJSON_HEADER_FOUND=1
+else $as_nop
+  CJSON_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${CJSON_HEADER_FOUND}" = "x0" ; then
+         CJSON_LIB=""
+         CJSON_INCLUDE=""
+      else
+
+         PBX_CJSON=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_CJSON 1
 _ACEOF
 
       fi
