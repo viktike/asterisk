@@ -550,6 +550,9 @@ THIRD_PARTY_CONFIGURE()
 # to make things easier for the users.
 
 AST_EXT_LIB_SETUP([ALSA], [Advanced Linux Sound Architecture], [asound])
+AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [opencore-amrnb])
+AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
+AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
 AST_EXT_LIB_SETUP([BFD], [Debug symbol decoding], [bfd])
 
 # BKTR is used for backtrace support on platforms that do not
@@ -2658,6 +2661,11 @@ AST_EXT_LIB_CHECK([RABBITMQ], [rabbitmq], [amqp_version], [rabbitmq-c/amqp.h])
 AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 
 AST_EXT_LIB_CHECK([OPUS], [opus], [opus_encoder_create], [opus/opus.h])
+
+AST_EXT_LIB_CHECK([AMR_NB], [opencore-amrnb], [Encoder_Interface_init], [opencore-amrnb/interf_enc.h])
+AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amrwb/dec_if.h])
+AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
+
 # opusfile.h includes <opus_multistream.h> so we need to make sure that
 # either $OPUS_INCLUDE or /usr/include/opus is added to the search path.
 __opus_include=${OPUS_INCLUDE}

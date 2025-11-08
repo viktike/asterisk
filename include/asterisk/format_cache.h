@@ -247,6 +247,16 @@ extern struct ast_format *ast_format_silk16;
 extern struct ast_format *ast_format_silk24;
 
 /*!
+ * \brief Built-in cached AMR format.
+ */
+extern struct ast_format *ast_format_amr;
+
+/*!
+ * \brief Built-in cached AMR-WB format.
+ */
+extern struct ast_format *ast_format_amrwb;
+
+/*!
  * \brief Initialize format cache support within the core.
  *
  * \retval 0 success
