@@ -61,7 +61,7 @@ struct ast_taskprocessor;
 #define AST_TASKPROCESSOR_MAX_NAME	70
 
 /*! Default taskprocessor high water level alert trigger */
-#define AST_TASKPROCESSOR_HIGH_WATER_LEVEL 500
+#define AST_TASKPROCESSOR_HIGH_WATER_LEVEL 25000
 
 /*!
  * \brief ast_tps_options for specification of taskprocessor options
