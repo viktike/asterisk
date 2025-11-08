@@ -953,6 +953,9 @@
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV
 
+/* Define to 1 if you have the SILK Audio Decoder/Encoder library. */
+#undef HAVE_SILK
+
 /* Define to 1 if you have the `sin' function. */
 #undef HAVE_SIN
 

@@ -601,6 +601,7 @@ AST_EXT_LIB_SETUP([OPENR2], [MFR2], [openr2])
 AST_EXT_LIB_SETUP([OPUS], [Opus], [opus])
 AST_EXT_LIB_SETUP([OPUSENC], [Opusenc], [opusenc])
 AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
+AST_EXT_LIB_SETUP([SILK], [SILK Audio Decoder/Encoder], [SKP_SILK_SDK])
 AST_EXT_LIB_SETUP([FAAC], [Faac], [faac])
 AST_EXT_LIB_SETUP([HIREDIS], [hiredis], [hiredis])
 AST_EXT_LIB_SETUP([MEMCACHED], [memcached], [memcached])
@@ -2661,6 +2662,7 @@ AST_EXT_LIB_CHECK([RABBITMQ], [rabbitmq], [amqp_version], [rabbitmq-c/amqp.h])
 
 AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 
+AST_EXT_LIB_CHECK([SILK], [SKP_SILK_SDK], [SKP_Silk_SDK_InitEncoder], [SKP_Silk_SDK_API.h])
 AST_EXT_LIB_CHECK([OPUS], [opus], [opus_encoder_create], [opus/opus.h])
 
 

@@ -1077,6 +1077,10 @@ PBX_FAAC
 FAAC_DIR
 FAAC_INCLUDE
 FAAC_LIB
+PBX_SILK
+SILK_DIR
+SILK_INCLUDE
+SILK_LIB
 PBX_OPUSFILE
 OPUSFILE_DIR
 OPUSFILE_INCLUDE
@@ -1528,6 +1532,7 @@ with_openr2
 with_opus
 with_opusenc
 with_opusfile
+with_SKP_SILK_SDK
 with_faac
 with_hiredis
 with_memcached
@@ -2327,6 +2332,8 @@ Optional Packages:
   --with-opus=PATH        use Opus files in PATH
   --with-opusenc=PATH     use Opusenc files in PATH
   --with-opusfile=PATH    use Opusfile files in PATH
+  --with-SKP_SILK_SDK=PATH
+                          use SILK Audio Decoder/Encoder files in PATH
   --with-faac=PATH        use Faac files in PATH
   --with-hiredis=PATH     use hiredis files in PATH
   --with-memcached=PATH   use memcached files in PATH
@@ -23778,6 +23785,39 @@ fi
 
 
 
+    SILK_DESCRIP="SILK Audio Decoder/Encoder"
+    SILK_OPTION="SKP_SILK_SDK"
+    PBX_SILK=0
+
+# Check whether --with-SKP_SILK_SDK was given.
+if test ${with_SKP_SILK_SDK+y}
+then :
+  withval=$with_SKP_SILK_SDK;
+	case ${withval} in
+	n|no)
+	USE_SILK=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_SILK=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} SILK"
+	;;
+	*)
+	SILK_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} SILK"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     FAAC_DESCRIP="Faac"
     FAAC_OPTION="faac"
     PBX_FAAC=0
@@ -43616,6 +43656,102 @@ _ACEOF
    fi
 fi
 
+
+
+
+if test "x${PBX_SILK}" != "x1" -a "${USE_SILK}" != "no"; then
+   pbxlibdir=""
+   # if --with-SILK=DIR has been specified, use it.
+   if test "x${SILK_DIR}" != "x"; then
+      if test -d ${SILK_DIR}/lib; then
+         pbxlibdir="-L${SILK_DIR}/lib"
+      else
+         pbxlibdir="-L${SILK_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SKP_Silk_SDK_InitEncoder in -lSKP_SILK_SDK" >&5
+printf %s "checking for SKP_Silk_SDK_InitEncoder in -lSKP_SILK_SDK... " >&6; }
+if test ${ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lSKP_SILK_SDK ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char SKP_Silk_SDK_InitEncoder ();
+int
+main (void)
+{
+return SKP_Silk_SDK_InitEncoder ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder=yes
+else $as_nop
+  ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder" >&5
+printf "%s\n" "$ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder" >&6; }
+if test "x$ac_cv_lib_SKP_SILK_SDK_SKP_Silk_SDK_InitEncoder" = xyes
+then :
+  AST_SILK_FOUND=yes
+else $as_nop
+  AST_SILK_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_SILK_FOUND}" = "yes"; then
+      SILK_LIB="${pbxlibdir} -lSKP_SILK_SDK "
+      # if --with-SILK=DIR has been specified, use it.
+      if test "x${SILK_DIR}" != "x"; then
+         SILK_INCLUDE="-I${SILK_DIR}/include"
+      fi
+      SILK_INCLUDE="${SILK_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${SILK_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "SKP_Silk_SDK_API.h" "ac_cv_header_SKP_Silk_SDK_API_h" "$ac_includes_default"
+if test "x$ac_cv_header_SKP_Silk_SDK_API_h" = xyes
+then :
+  SILK_HEADER_FOUND=1
+else $as_nop
+  SILK_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${SILK_HEADER_FOUND}" = "x0" ; then
+         SILK_LIB=""
+         SILK_INCLUDE=""
+      else
+
+         PBX_SILK=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_SILK 1
+_ACEOF
+
+      fi
+   fi
+fi
 
 
 

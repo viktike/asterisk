@@ -3927,6 +3927,11 @@ int ast_rtp_engine_init(void)
 	set_next_mime_type(ast_format_amr, 0,  "audio", "AMR", 8000);
 	set_next_mime_type(ast_format_amrwb, 0,  "audio", "AMR-WB", 16000);
 
+	set_next_mime_type(ast_format_silk8, 0,  "audio", "SILK", 8000);
+	set_next_mime_type(ast_format_silk12, 0,  "audio", "SILK", 12000);
+	set_next_mime_type(ast_format_silk16, 0,  "audio", "SILK", 16000);
+	set_next_mime_type(ast_format_silk24, 0,  "audio", "SILK", 24000);
+
 	/* Define the static rtp payload mappings */
 	add_static_payload(0, ast_format_ulaw, 0);
 	#ifdef USE_DEPRECATED_G726
@@ -3970,6 +3975,11 @@ int ast_rtp_engine_init(void)
 	add_static_payload(109, ast_format_h265, 0);
 
 	add_static_payload(110, ast_format_speex, 0);
+
+	add_static_payload(-1, ast_format_silk8, 0);
+	add_static_payload(-1, ast_format_silk12, 0);
+	add_static_payload(-1, ast_format_silk16, 0);
+	add_static_payload(-1, ast_format_silk24, 0);
 
 	add_static_payload(-1, ast_format_amr, 0);
 	add_static_payload(-1, ast_format_amrwb, 0);

@@ -964,6 +964,63 @@ static struct ast_codec gsm_efr = {
 	.smooth = 1,
 };
 
+static int silk_samples(struct ast_frame *frame)
+{
+	return ast_format_get_sample_rate(frame->subclass.format) / 50;
+}
+
+static struct ast_codec silk8 = {
+	.name = "silk8",
+	.description = "SILK 8kHz",
+	.type = AST_MEDIA_TYPE_AUDIO,
+	.sample_rate = 8000,
+	.minimum_ms = 20,
+	.maximum_ms = 20,
+	.default_ms = 20,
+	.minimum_bytes = 0,
+	.samples_count = silk_samples,
+	.smooth = 0,
+};
+
+static struct ast_codec silk12 = {
+	.name = "silk12",
+	.description = "SILK 12kHz",
+	.type = AST_MEDIA_TYPE_AUDIO,
+	.sample_rate = 12000,
+	.minimum_ms = 20,
+	.maximum_ms = 20,
+	.default_ms = 20,
+	.minimum_bytes = 0,
+	.samples_count = silk_samples,
+	.smooth = 0,
+};
+
+static struct ast_codec silk16 = {
+	.name = "silk16",
+	.description = "SILK 16kHz",
+	.type = AST_MEDIA_TYPE_AUDIO,
+	.sample_rate = 16000,
+	.minimum_ms = 20,
+	.maximum_ms = 20,
+	.default_ms = 20,
+	.minimum_bytes = 0,
+	.samples_count = silk_samples,
+	.smooth = 0,
+};
+
+static struct ast_codec silk24 = {
+	.name = "silk24",
+	.description = "SILK 24kHz",
+	.type = AST_MEDIA_TYPE_AUDIO,
+	.sample_rate = 24000,
+	.minimum_ms = 20,
+	.maximum_ms = 20,
+	.default_ms = 20,
+	.minimum_bytes = 0,
+	.samples_count = silk_samples,
+	.smooth = 0,
+};
+
 #define CODEC_REGISTER_AND_CACHE(codec) \
 	({ \
 		int __res_ ## __LINE__ = 0; \
@@ -995,6 +1052,11 @@ static struct ast_codec gsm_efr = {
 int ast_codec_builtin_init(void)
 {
 	int res = 0;
+
+	res |= CODEC_REGISTER_AND_CACHE(silk8);
+	res |= CODEC_REGISTER_AND_CACHE(silk12);
+	res |= CODEC_REGISTER_AND_CACHE(silk16);
+	res |= CODEC_REGISTER_AND_CACHE(silk24);
 
 	res |= CODEC_REGISTER_AND_CACHE(gsm_efr);
 
