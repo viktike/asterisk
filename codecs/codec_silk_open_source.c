@@ -4,6 +4,7 @@
 	<defaultenabled>yes</defaultenabled>
  ***/
 
+#define ASTMM_LIBC ASTMM_IGNORE
 #include "asterisk.h"
 
 #include "asterisk/codec.h"             /* for AST_MEDIA_TYPE_AUDIO */
@@ -256,7 +257,7 @@ static void silktolin_destroy(struct ast_trans_pvt *pvt)
 static struct ast_translator silk8tolin = {
 	.name = "silk8tolin",
 	.src_codec = {
-		.name = "silk8",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 8000,
 	},
@@ -284,7 +285,7 @@ static struct ast_translator lintosilk8 = {
 		.sample_rate = 8000,
 	},
 	.dst_codec = {
-		.name = "silk8",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 8000,
 	},
@@ -302,7 +303,7 @@ static struct ast_translator lintosilk8 = {
 static struct ast_translator silk12tolin = {
 	.name = "silk12tolin",
 	.src_codec = {
-		.name = "silk12",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 12000,
 	},
@@ -330,7 +331,7 @@ static struct ast_translator lintosilk12 = {
 		.sample_rate = 12000,
 	},
 	.dst_codec = {
-		.name = "silk12",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 12000,
 	},
@@ -347,7 +348,7 @@ static struct ast_translator lintosilk12 = {
 static struct ast_translator silk16tolin = {
 	.name = "silk16tolin",
 	.src_codec = {
-		.name = "silk16",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 16000,
 	},
@@ -375,7 +376,7 @@ static struct ast_translator lintosilk16 = {
 		.sample_rate = 16000,
 	},
 	.dst_codec = {
-		.name = "silk16",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 16000,
 	},
@@ -393,7 +394,7 @@ static struct ast_translator lintosilk16 = {
 static struct ast_translator silk24tolin = {
 	.name = "silk24tolin",
 	.src_codec = {
-		.name = "silk24",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 24000,
 	},
@@ -421,7 +422,7 @@ static struct ast_translator lintosilk24 = {
 		.sample_rate = 24000,
 	},
 	.dst_codec = {
-		.name = "silk24",
+		.name = "silk",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 24000,
 	},

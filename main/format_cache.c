@@ -241,14 +241,6 @@ struct ast_format *ast_format_amrwb;
 struct ast_format *ast_format_gsm_efr;
 
 /*!
- * \brief Built-in cached SILK format.
- */
-struct ast_format *ast_format_silk8;
-struct ast_format *ast_format_silk12;
-struct ast_format *ast_format_silk16;
-struct ast_format *ast_format_silk24;
-
-/*!
  * \brief Built-in cached t140 format.
  */
 struct ast_format *ast_format_t140;
@@ -340,11 +332,6 @@ static void format_cache_shutdown(void)
 	ao2_replace(ast_format_amrwb, NULL);
 
 	ao2_replace(ast_format_gsm_efr, NULL);
-
-	ao2_replace(ast_format_silk8, NULL);
-	ao2_replace(ast_format_silk12, NULL);
-	ao2_replace(ast_format_silk16, NULL);
-	ao2_replace(ast_format_silk24, NULL);
 
 	ao2_replace(ast_format_g723, NULL);
 	ao2_replace(ast_format_ulaw, NULL);
@@ -454,9 +441,9 @@ static void set_cached_format(const char *name, struct ast_format *format)
 	} else if (!strcmp(name, "speex32")) {
 		ao2_replace(ast_format_speex32, format);
 	} else if (!strcmp(name, "ilbc")) {
+		ao2_replace(ast_format_ilbc, format);
 	} else if (!strcmp(name, "gsm-efr")) {
 		ao2_replace(ast_format_gsm_efr, format);
-		ao2_replace(ast_format_ilbc, format);
 	} else if (!strcmp(name, "g722")) {
 		ao2_replace(ast_format_g722, format);
 	} else if (!strcmp(name, "siren7")) {
