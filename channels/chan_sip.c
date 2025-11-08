@@ -16649,6 +16649,7 @@ static void destroy_association(struct sip_peer *peer)
 		if (peer->rt_fromcontact && sip_cfg.peer_rtupdate) {
 			ast_update_realtime(tablename, "name", peer->name, "fullcontact", "", "ipaddr", "", "port", "0", "regseconds", "0", "regserver", "", "useragent", "", "lastms", "0", SENTINEL);
 		} else {
+			ast_db_del("SIP/UserAgent", peer->name);
 			ast_db_del("SIP/Registry", peer->name);
 			ast_db_del("SIP/RegistryPath", peer->name);
 			ast_db_del("SIP/PeerMethods", peer->name);
@@ -17215,6 +17216,7 @@ static enum parse_register_result parse_register_contact(struct sip_pvt *pvt, st
 	useragent = sip_get_header(req, "User-Agent");
 	if (strcasecmp(useragent, peer->useragent)) {
 		ast_string_field_set(peer, useragent, useragent);
+		ast_db_put("SIP/UserAgent", peer->name, useragent);
 		ast_verb(4, "Saved useragent \"%s\" for peer %s\n", peer->useragent, peer->name);
 	}
 	return PARSE_REGISTER_UPDATE;
