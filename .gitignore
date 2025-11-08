@@ -41,3 +41,6 @@ tests/CI/output
 
 .version
 .flavor
+
+*.swp
+*.swo

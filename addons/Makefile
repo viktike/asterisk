@@ -33,6 +33,7 @@ ALL_C_MODS:=chan_mobile \
             format_mp3 \
             format_lame \
             res_config_mysql \
+            func_redis \
             res_json
 
 res_json.so: cJSON.o res_json.o

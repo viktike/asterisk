@@ -598,6 +598,7 @@ AST_EXT_LIB_SETUP([OPENR2], [MFR2], [openr2])
 AST_EXT_LIB_SETUP([OPUS], [Opus], [opus])
 AST_EXT_LIB_SETUP([OPUSFILE], [Opusfile], [opusfile])
 AST_EXT_LIB_SETUP([FAAC], [Faac], [faac])
+AST_EXT_LIB_SETUP([HIREDIS], [hiredis], [hiredis])
 AST_EXT_LIB_SETUP([FAAD], [Faad], [faad])
 AST_EXT_LIB_SETUP([CJSON], [cJSON], [cjson])
 AST_EXT_LIB_SETUP([OSPTK], [OSP Toolkit], [osptk])
@@ -2645,6 +2646,8 @@ AST_EXT_LIB_CHECK([OPENR2], [openr2], [openr2_chan_new], [openr2.h])
 
 AST_EXT_LIB_CHECK([FAAC], [faac], [faacEncOpen], [faac.h])
 AST_EXT_LIB_CHECK([FAAD], [faad], [NeAACDecOpen], [neaacdec.h])
+
+AST_EXT_LIB_CHECK([HIREDIS], [hiredis], [redisReaderCreate], [hiredis/hiredis.h])
 
 AST_EXT_LIB_CHECK([CJSON], [cjson], [cJSON_Version], [cjson/cJSON.h])
 

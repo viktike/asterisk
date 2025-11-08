@@ -380,6 +380,9 @@
 /* Define if your system has the GTK2 libraries. */
 #undef HAVE_GTK2
 
+/* Define to 1 if you have the hiredis library. */
+#undef HAVE_HIREDIS
+
 /* Define to 1 if you have the Hoard Memory Allocator library. */
 #undef HAVE_HOARD
 
