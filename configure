@@ -1039,6 +1039,14 @@ PBX_OSPTK
 OSPTK_DIR
 OSPTK_INCLUDE
 OSPTK_LIB
+PBX_FAAD
+FAAD_DIR
+FAAD_INCLUDE
+FAAD_LIB
+PBX_FAAC
+FAAC_DIR
+FAAC_INCLUDE
+FAAC_LIB
 PBX_OPUSFILE
 OPUSFILE_DIR
 OPUSFILE_INCLUDE
@@ -1470,6 +1478,8 @@ with_ogg
 with_openr2
 with_opus
 with_opusfile
+with_faac
+with_faad
 with_osptk
 with_postgres
 with_beanstalk
@@ -2249,6 +2259,8 @@ Optional Packages:
   --with-openr2=PATH      use MFR2 files in PATH
   --with-opus=PATH        use Opus files in PATH
   --with-opusfile=PATH    use Opusfile files in PATH
+  --with-faac=PATH        use Faac files in PATH
+  --with-faad=PATH        use Faad files in PATH
   --with-osptk=PATH       use OSP Toolkit files in PATH
   --with-postgres=PATH    use PostgreSQL files in PATH
   --with-beanstalk=PATH   use Beanstalk Job Queue files in PATH
@@ -23554,6 +23566,72 @@ fi
 
 
 
+    FAAC_DESCRIP="Faac"
+    FAAC_OPTION="faac"
+    PBX_FAAC=0
+
+# Check whether --with-faac was given.
+if test ${with_faac+y}
+then :
+  withval=$with_faac;
+	case ${withval} in
+	n|no)
+	USE_FAAC=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_FAAC=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} FAAC"
+	;;
+	*)
+	FAAC_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} FAAC"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    FAAD_DESCRIP="Faad"
+    FAAD_OPTION="faad"
+    PBX_FAAD=0
+
+# Check whether --with-faad was given.
+if test ${with_faad+y}
+then :
+  withval=$with_faad;
+	case ${withval} in
+	n|no)
+	USE_FAAD=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_FAAD=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} FAAD"
+	;;
+	*)
+	FAAD_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} FAAD"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     OSPTK_DESCRIP="OSP Toolkit"
     OSPTK_OPTION="osptk"
     PBX_OSPTK=0
@@ -42414,6 +42492,199 @@ fi
          PBX_OPENR2=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_OPENR2 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_FAAC}" != "x1" -a "${USE_FAAC}" != "no"; then
+   pbxlibdir=""
+   # if --with-FAAC=DIR has been specified, use it.
+   if test "x${FAAC_DIR}" != "x"; then
+      if test -d ${FAAC_DIR}/lib; then
+         pbxlibdir="-L${FAAC_DIR}/lib"
+      else
+         pbxlibdir="-L${FAAC_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for faacEncOpen in -lfaac" >&5
+printf %s "checking for faacEncOpen in -lfaac... " >&6; }
+if test ${ac_cv_lib_faac_faacEncOpen+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfaac ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char faacEncOpen ();
+int
+main (void)
+{
+return faacEncOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_faac_faacEncOpen=yes
+else $as_nop
+  ac_cv_lib_faac_faacEncOpen=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_faac_faacEncOpen" >&5
+printf "%s\n" "$ac_cv_lib_faac_faacEncOpen" >&6; }
+if test "x$ac_cv_lib_faac_faacEncOpen" = xyes
+then :
+  AST_FAAC_FOUND=yes
+else $as_nop
+  AST_FAAC_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_FAAC_FOUND}" = "yes"; then
+      FAAC_LIB="${pbxlibdir} -lfaac "
+      # if --with-FAAC=DIR has been specified, use it.
+      if test "x${FAAC_DIR}" != "x"; then
+         FAAC_INCLUDE="-I${FAAC_DIR}/include"
+      fi
+      FAAC_INCLUDE="${FAAC_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${FAAC_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "faac.h" "ac_cv_header_faac_h" "$ac_includes_default"
+if test "x$ac_cv_header_faac_h" = xyes
+then :
+  FAAC_HEADER_FOUND=1
+else $as_nop
+  FAAC_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${FAAC_HEADER_FOUND}" = "x0" ; then
+         FAAC_LIB=""
+         FAAC_INCLUDE=""
+      else
+
+         PBX_FAAC=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_FAAC 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+if test "x${PBX_FAAD}" != "x1" -a "${USE_FAAD}" != "no"; then
+   pbxlibdir=""
+   # if --with-FAAD=DIR has been specified, use it.
+   if test "x${FAAD_DIR}" != "x"; then
+      if test -d ${FAAD_DIR}/lib; then
+         pbxlibdir="-L${FAAD_DIR}/lib"
+      else
+         pbxlibdir="-L${FAAD_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for NeAACDecOpen in -lfaad" >&5
+printf %s "checking for NeAACDecOpen in -lfaad... " >&6; }
+if test ${ac_cv_lib_faad_NeAACDecOpen+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfaad ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char NeAACDecOpen ();
+int
+main (void)
+{
+return NeAACDecOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_faad_NeAACDecOpen=yes
+else $as_nop
+  ac_cv_lib_faad_NeAACDecOpen=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_faad_NeAACDecOpen" >&5
+printf "%s\n" "$ac_cv_lib_faad_NeAACDecOpen" >&6; }
+if test "x$ac_cv_lib_faad_NeAACDecOpen" = xyes
+then :
+  AST_FAAD_FOUND=yes
+else $as_nop
+  AST_FAAD_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_FAAD_FOUND}" = "yes"; then
+      FAAD_LIB="${pbxlibdir} -lfaad "
+      # if --with-FAAD=DIR has been specified, use it.
+      if test "x${FAAD_DIR}" != "x"; then
+         FAAD_INCLUDE="-I${FAAD_DIR}/include"
+      fi
+      FAAD_INCLUDE="${FAAD_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${FAAD_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "neaacdec.h" "ac_cv_header_neaacdec_h" "$ac_includes_default"
+if test "x$ac_cv_header_neaacdec_h" = xyes
+then :
+  FAAD_HEADER_FOUND=1
+else $as_nop
+  FAAD_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${FAAD_HEADER_FOUND}" = "x0" ; then
+         FAAD_LIB=""
+         FAAD_INCLUDE=""
+      else
+
+         PBX_FAAD=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_FAAD 1
 _ACEOF
 
       fi
