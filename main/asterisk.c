@@ -310,7 +310,7 @@ int daemon(int, int);  /* defined in libresolv of all places */
 #define WELCOME_MESSAGE \
     ast_verbose("Asterisk %s, " COPYRIGHT_TAG "\n" \
                 "Created by Mark Spencer <markster@digium.com>\n" \
-                "Modified and enhanched by FixConnect <info@fixconnect.hu>\n" \n
+                "Modified and enhanched by FixConnect <info@fixconnect.hu>\n" \
                 "=========================================================================\n", ast_get_version()) \
 
 static int ast_socket = -1;		/*!< UNIX Socket for allowing remote control */
