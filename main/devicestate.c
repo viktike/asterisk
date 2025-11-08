@@ -157,6 +157,7 @@
 #include "asterisk/astobj2.h"
 #include "asterisk/stasis.h"
 #include "asterisk/devicestate.h"
+#include "asterisk/astdb.h"
 
 #define DEVSTATE_TOPIC_BUCKETS 57
 
@@ -467,6 +468,8 @@ static void do_state_change(const char *device, enum ast_devstate_cache cachable
 	state = _ast_device_state(device, 0);
 
 	ast_debug(3, "Changing state for %s - state %u (%s)\n", device, state, ast_devstate2str(state));
+
+	ast_db_put("Devstate", device, ast_devstate2str(state));
 
 	ast_publish_device_state(device, state, cachable);
 }
