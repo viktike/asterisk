@@ -1356,6 +1356,11 @@ reconnect_tryagain:
 #endif
 			ast_debug(1, "MySQL RealTime: Successfully connected to database.\n");
 			conn->connected = 1;
+			if (strlen(conn->charset) > 2) {
+				char set_names[255];
+				snprintf(set_names, sizeof(set_names), "SET NAMES '%s'", conn->charset);
+				mysql_real_query(&conn->handle, set_names, strlen(set_names));
+			}
 			conn->connect_time = time(NULL);
 			return 1;
 		} else {
@@ -1379,7 +1384,13 @@ reconnect_tryagain:
 		if (!conn->connected) {
 			conn->connected = 1;
 			conn->connect_time = time(NULL);
-		}
+		} else {
+			if (strlen(conn->charset) > 2) {
+				char set_names[255];
+				snprintf(set_names, sizeof(set_names), "SET NAMES '%s'", conn->charset);
+				mysql_real_query(&conn->handle, set_names, strlen(set_names));
+			}
+ 		}
 
 		if (mysql_select_db(&conn->handle, conn->name) != 0) {
 			ast_log(LOG_WARNING, "MySQL RealTime: Unable to select database: %s. Still Connected (%u) - %s.\n", conn->name, mysql_errno(&conn->handle), mysql_error(&conn->handle));
