@@ -272,6 +272,16 @@ extern struct ast_format *ast_format_gsm_efr;
 extern struct ast_format *ast_format_evs;
 
 /*!
+ * \brief Built-in cached BroadVoice16 format.
+ */
+extern struct ast_format *ast_format_bv16;
+
+/*!
+ * \brief Built-in cached BroadVoice32 format.
+ */
+extern struct ast_format *ast_format_bv32;
+
+/*!
  * \brief Initialize format cache support within the core.
  *
  * \retval 0 success

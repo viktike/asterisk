@@ -278,6 +278,16 @@ struct ast_format *ast_format_silk12;
 struct ast_format *ast_format_silk16;
 struct ast_format *ast_format_silk24;
 
+/*!
+ * \brief Built-in cached BroadVoice16 format.
+ */
+struct ast_format *ast_format_bv16;
+
+/*!
+ * \brief Built-in cached BroadVoice32 format.
+ */
+struct ast_format *ast_format_bv32;
+
 /*! \brief Number of buckets to use for the media format cache (should be prime for performance reasons) */
 #define CACHE_BUCKETS 53
 
@@ -389,6 +399,8 @@ static void format_cache_shutdown(void)
 	ao2_replace(ast_format_silk12, NULL);
 	ao2_replace(ast_format_silk16, NULL);
 	ao2_replace(ast_format_silk24, NULL);
+	ao2_replace(ast_format_bv16, NULL);
+	ao2_replace(ast_format_bv32, NULL);
 }
 
 int ast_format_cache_init(void)
@@ -500,6 +512,10 @@ static void set_cached_format(const char *name, struct ast_format *format)
 		ao2_replace(ast_format_t38, format);
 	} else if (!strcmp(name, "none")) {
 		ao2_replace(ast_format_none, format);
+        } else if (!strcmp(name, "bv16")) {
+                ao2_replace(ast_format_bv16, format);
+        } else if (!strcmp(name, "bv32")) {
+                ao2_replace(ast_format_bv32, format);
 	} else if (!strcmp(name, "silk8")) {
 		ao2_replace(ast_format_silk8, format);
 	} else if (!strcmp(name, "silk12")) {

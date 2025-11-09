@@ -740,6 +740,42 @@ static struct ast_codec g719 = {
 	.get_length = g719_length,
 };
 
+static int bv16_samples(struct ast_frame *frame)
+{
+       return 40 * (frame->datalen / 10);
+}
+
+static struct ast_codec bv16 = {
+       .name = "bv16",
+       .description = "BroadVoice16",
+       .type = AST_MEDIA_TYPE_AUDIO,
+       .sample_rate = 8000,
+       .minimum_ms = 5,
+       .maximum_ms = 300,
+       .default_ms = 20,
+       .minimum_bytes = 10,
+       .samples_count = bv16_samples,
+       .smooth = 1,
+};
+
+static int bv32_samples(struct ast_frame *frame)
+{
+       return 80 * (frame->datalen / 20);
+}
+
+static struct ast_codec bv32 = {
+       .name = "bv32",
+       .description = "BroadVoice32",
+       .type = AST_MEDIA_TYPE_AUDIO,
+       .sample_rate = 16000,
+       .minimum_ms = 5,
+       .maximum_ms = 300,
+       .default_ms = 20,
+       .minimum_bytes = 20,
+       .samples_count = bv32_samples,
+       .smooth = 1,
+};
+
 static int opus_samples(struct ast_frame *frame)
 {
 	/*
@@ -1068,6 +1104,9 @@ int ast_codec_builtin_init(void)
 	res |= CODEC_REGISTER_AND_CACHE(t140);
 	res |= CODEC_REGISTER_AND_CACHE(t38);
 	res |= CODEC_REGISTER_AND_CACHE(none);
+	
+	res |= CODEC_REGISTER_AND_CACHE(bv16);
+	res |= CODEC_REGISTER_AND_CACHE(bv32);
 
 	res |= CODEC_REGISTER_AND_CACHE_NAMED("silk8", silk8);
 	res |= CODEC_REGISTER_AND_CACHE_NAMED("silk12", silk12);
