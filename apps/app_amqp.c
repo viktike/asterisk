@@ -200,11 +200,11 @@ static int publish_exec(struct ast_channel *chan, const char *data)
 
 static int load_module(void)
 {
-	if (ast_register_application_xml(app, publish_exec)) {
-		return AST_MODULE_LOAD_SUCCESS;
-	} else {
-		return AST_MODULE_LOAD_DECLINE;
-	}
+	int res;
+	
+	res = ast_register_application_xml(app, publish_exec);
+
+	return res ? AST_MODULE_LOAD_DECLINE : AST_MODULE_LOAD_SUCCESS;
 }
 
 static int unload_module(void)
