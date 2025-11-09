@@ -18,11 +18,11 @@
 /* Asterisk internal defaults; can differ from RFC defaults */
 static struct evs_attr default_evs_attr = {
 	.evs_mode_switch        = -1, /* primary mode                     */
-	.hf_only                = -1, /* all formats                      */
+	.hf_only                =  1, /* only Header Full format          */
 	.dtx                    =  2, /* on                               */
 	.dtx_send               =  1, /* do no change                     */
-	.dtx_recv               =  2, /* on                               */
-	.max_red                = -1, /* no redundancy limit              */
+	.dtx_recv               =  0, /* off                              */
+	.max_red                =  0, /* no redundancy                    */
 	.cmr                    =  0, /* might be in payload              */
 	.cmr_included           =  0, /* CMR not in SDP                   */
 	.br                     =  0, /* inclusion depends                */
@@ -34,7 +34,7 @@ static struct evs_attr default_evs_attr = {
 	.ch_send                =  0, /* mono                             */
 	.ch_recv                =  0, /* mono                             */
 	.ch_aw_send             =  7, /* MAX_RF_FEC_OFFSET; do not change */
-	.ch_aw_recv             =  0, /* not at start                     */
+	.ch_aw_recv             = -1, /* off; not linked to RTCP          */
 	.mode_set               =  0, /* all modes                        */
 	.mode_change_period     =  0, /* not specified                    */
 	.mode_change_neighbor   =  0, /* change to any                    */
