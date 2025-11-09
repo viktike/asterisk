@@ -47,6 +47,7 @@ static int celt_compute_frame_size(int rate)
 static int celt_encode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 {
 	struct celt_coder_pvt *state = pvt->pvt;
+	struct ast_format *format;
 	int16_t *pcm = (int16_t *) f->data.ptr;
 	int encoded;
 
@@ -60,16 +61,10 @@ static int celt_encode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 		return -1;
 	}
 
-	struct ast_frame out = {
-		.frametype = AST_FRAME_VOICE,
-		.subclass.format = ast_format_get_by_id(ast_format_id_by_rate("CELT", state->sample_rate)),
-		.data.ptr = state->bitstream,
-		.datalen = encoded,
-		.samples = state->frame_size,
-		.src = __PRETTY_FUNCTION__,
-		.mallocd = 0,
-	};
-	ast_trans_frameout(pvt, &out);
+	// TODO
+
+	ast_trans_frameout(pvt, ???);
+
 	return 0;
 }
 
@@ -78,7 +73,7 @@ static int celt_encode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 static int celt_decode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 {
 	struct celt_coder_pvt *state = pvt->pvt;
-	int16_t pcm[960 * 2]; /* enough for mono/stereo */
+	int16_t pcm[960]; /* enough for mono */
 	int ret;
 
 	ret = celt_decode(state->dec, f->data.ptr, f->datalen, pcm, state->frame_size);
@@ -87,16 +82,9 @@ static int celt_decode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 		return -1;
 	}
 
-	struct ast_frame out = {
-		.frametype = AST_FRAME_VOICE,
-		.subclass.format = ast_format_get_by_id(ast_format_id_by_rate("slin", state->sample_rate)),
-		.data.ptr = pcm,
-		.datalen = state->frame_size * 2,
-		.samples = state->frame_size,
-		.src = __PRETTY_FUNCTION__,
-		.mallocd = 0,
-	};
-	ast_trans_frameout(pvt, &out);
+	// TODO
+
+	ast_trans_frameout(pvt, ???);
 	return 0;
 }
 
@@ -134,45 +122,123 @@ static void celt_destroy(struct ast_trans_pvt *pvt)
 
 /* --------------------- Translator Factory --------------------- */
 
-#define DECL_CELT_PAIR(rate) \
-static struct ast_translator celttolin##rate = { \
-	.name = "celttolin" #rate, \
-	.src_codec = "CELT" #rate, \
-	.dst_codec = "slin" #rate, \
-	.newpvt = celt_new, \
-	.framein = celt_decode_frame, \
-	.destroy = celt_destroy, \
-	.sample_rate = rate, \
-	.buf_size = 2 * celt_compute_frame_size(rate), \
-	.desc_size = sizeof(struct celt_coder_pvt), \
-}; \
-static struct ast_translator lintocelt##rate = { \
-	.name = "lintocelt" #rate, \
-	.src_codec = "slin" #rate, \
-	.dst_codec = "CELT" #rate, \
-	.newpvt = celt_new, \
-	.framein = celt_encode_frame, \
-	.destroy = celt_destroy, \
-	.sample_rate = rate, \
-	.buf_size = CELT_MAX_BITSTREAM, \
-	.desc_size = sizeof(struct celt_coder_pvt), \
+static struct ast_translator celt32tolin32 = {
+	.name = "celt32tolin32",
+	.src_codec = {
+		.name = "celt32",
+		.type = AST_MEDIA_TYPE_AUDIO,
+		.sample_rate = 32000
+	},
+	.dst_codec = {
+		.name = "slin32",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 32000
+	},
+	.newpvt = celt_new,
+	.framein = celt_decode_frame,
+	.destroy = celt_destroy,
+	.buf_size = 1280,
+	.desc_size = sizeof(struct celt_coder_pvt),
+};
+static struct ast_translator lin32tocelt32 = {
+	.name = "lin32tocelt32",
+	.src_codec = {
+                .name = "slin32",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 32000
+        },
+	.dst_codec = {
+                .name = "celt32",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 32000
+        },
+	.newpvt = celt_new,
+	.framein = celt_encode_frame,
+	.destroy = celt_destroy,
+	.buf_size = CELT_MAX_BITSTREAM,
+	.desc_size = sizeof(struct celt_coder_pvt),
 };
 
-DECL_CELT_PAIR(32000)
-DECL_CELT_PAIR(44100)
-DECL_CELT_PAIR(48000)
+static struct ast_translator celt44tolin44 = {
+        .name = "celt44tolin44",
+        .src_codec = {
+                .name = "celt44",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 44100
+        },
+        .dst_codec = {
+                .name = "slin44",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 44100
+        },
+        .newpvt = celt_new,
+        .framein = celt_decode_frame,
+        .destroy = celt_destroy,
+        .buf_size = 1764,
+        .desc_size = sizeof(struct celt_coder_pvt),
+};
+static struct ast_translator lin44tocelt44 = {
+        .name = "lin44tocelt44",
+	.src_codec = {
+                .name = "slin44",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 44100
+        },
+        .dst_codec = {
+                .name = "celt44",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 44100
+        },
+        .newpvt = celt_new,
+        .framein = celt_encode_frame,
+        .destroy = celt_destroy,
+        .buf_size = CELT_MAX_BITSTREAM,
+        .desc_size = sizeof(struct celt_coder_pvt),
+};
 
+static struct ast_translator celt48tolin48 = {
+        .name = "celt48tolin48",
+        .src_codec = {
+                .name = "celt48",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 48000
+        },
+        .dst_codec = {
+                .name = "slin48",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 48000
+        },
+        .newpvt = celt_new,
+        .framein = celt_decode_frame,
+        .destroy = celt_destroy,
+        .buf_size = 1920,
+        .desc_size = sizeof(struct celt_coder_pvt),
+};
+static struct ast_translator lin48tocelt48 = {
+        .name = "lin48tocelt48",
+        .src_codec = {
+                .name = "slin48",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 48000
+        },
+        .dst_codec = {
+                .name = "celt48",
+                .type = AST_MEDIA_TYPE_AUDIO,
+                .sample_rate = 48000
+        },
+        .newpvt = celt_new,
+        .framein = celt_encode_frame,
+        .destroy = celt_destroy,
+        .buf_size = CELT_MAX_BITSTREAM,
+        .desc_size = sizeof(struct celt_coder_pvt),
+};
 /* --------------------- Load / Unload --------------------- */
 
-static int register_celt_pair(struct ast_translator *a, struct ast_translator *b, int rate)
+static int register_celt_pair(struct ast_translator *a, struct ast_translator *b)
 {
 	int res = 0;
 	res |= ast_register_translator(a);
 	res |= ast_register_translator(b);
-	if (res)
-		ast_log(LOG_ERROR, "Failed to register CELT %d Hz translators\n", rate);
-	else
-		ast_log(LOG_NOTICE, "Registered CELT translators for %d Hz\n", rate);
 	return res;
 }
 
@@ -185,24 +251,17 @@ static void unregister_celt_pair(struct ast_translator *a, struct ast_translator
 static int load_module(void)
 {
 	int res = 0;
-
-	/* Set per-instance sample rate field */
-	celttolin32000.sample_rate = lintocelt32000.sample_rate = 32000;
-	celttolin44100.sample_rate = lintocelt44100.sample_rate = 44100;
-	celttolin48000.sample_rate = lintocelt48000.sample_rate = 48000;
-
-	res |= register_celt_pair(&lintocelt32000, &celttolin32000, 32000);
-	res |= register_celt_pair(&lintocelt44100, &celttolin44100, 44100);
-	res |= register_celt_pair(&lintocelt48000, &celttolin48000, 48000);
-
+	res |= register_celt_pair(&lin32tocelt32, &celt32tolin32);
+	res |= register_celt_pair(&lin44tocelt44, &celt44tolin44);
+	res |= register_celt_pair(&lin48tocelt48, &celt48tolin48);
 	return res ? AST_MODULE_LOAD_FAILURE : AST_MODULE_LOAD_SUCCESS;
 }
 
 static int unload_module(void)
 {
-	unregister_celt_pair(&lintocelt32000, &celttolin32000);
-	unregister_celt_pair(&lintocelt44100, &celttolin44100);
-	unregister_celt_pair(&lintocelt48000, &celttolin48000);
+	unregister_celt_pair(&lin32tocelt32, &celt32tolin32);
+	unregister_celt_pair(&lin44tocelt44, &celt44tolin44);
+	unregister_celt_pair(&lin48tocelt48, &celt48tolin48);
 	return 0;
 }
 
