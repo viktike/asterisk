@@ -149,6 +149,9 @@
 /* Define to 1 if you have the bson-1.0 library. */
 #undef HAVE_BSON
 
+/* Define to 1 if you have the BroadVoice Audio Decoder/Encoder library. */
+#undef HAVE_BV
+
 /* Define to 1 if byteswap.h macros are available. */
 #undef HAVE_BYTESWAP_H
 
