@@ -1,0 +1,5 @@
+[general]
+enabled=yes
+topic=asterisk_cel
+;dateformat=%F %T
+;timezone=Europe/Moscow
