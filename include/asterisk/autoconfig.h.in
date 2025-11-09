@@ -269,6 +269,9 @@
    EFD_SEMAPHORE flags. */
 #undef HAVE_EVENTFD
 
+/* Define to 1 if you have the 3GPP EVS Audio Decoder/Encoder library. */
+#undef HAVE_EVS
+
 /* Define to 1 if you have the `exp' function. */
 #undef HAVE_EXP
 

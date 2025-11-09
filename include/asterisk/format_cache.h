@@ -262,6 +262,11 @@ extern struct ast_format *ast_format_amrwb;
 extern struct ast_format *ast_format_gsm_efr;
 
 /*!
+ * \brief Built-in cached 3GPP EVS format.
+ */
+extern struct ast_format *ast_format_evs;
+
+/*!
  * \brief Initialize format cache support within the core.
  *
  * \retval 0 success

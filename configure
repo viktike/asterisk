@@ -1081,6 +1081,10 @@ PBX_SILK
 SILK_DIR
 SILK_INCLUDE
 SILK_LIB
+PBX_EVS
+EVS_DIR
+EVS_INCLUDE
+EVS_LIB
 PBX_OPUSFILE
 OPUSFILE_DIR
 OPUSFILE_INCLUDE
@@ -1532,6 +1536,7 @@ with_openr2
 with_opus
 with_opusenc
 with_opusfile
+with_3gpp_evs
 with_SKP_SILK_SDK
 with_faac
 with_hiredis
@@ -2332,6 +2337,7 @@ Optional Packages:
   --with-opus=PATH        use Opus files in PATH
   --with-opusenc=PATH     use Opusenc files in PATH
   --with-opusfile=PATH    use Opusfile files in PATH
+  --with-3gpp-evs=PATH    use 3GPP EVS Audio Decoder/Encoder files in PATH
   --with-SKP_SILK_SDK=PATH
                           use SILK Audio Decoder/Encoder files in PATH
   --with-faac=PATH        use Faac files in PATH
@@ -23785,6 +23791,39 @@ fi
 
 
 
+    EVS_DESCRIP="3GPP EVS Audio Decoder/Encoder"
+    EVS_OPTION="3gpp-evs"
+    PBX_EVS=0
+
+# Check whether --with-3gpp-evs was given.
+if test ${with_3gpp_evs+y}
+then :
+  withval=$with_3gpp_evs;
+	case ${withval} in
+	n|no)
+	USE_EVS=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_EVS=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} EVS"
+	;;
+	*)
+	EVS_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} EVS"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     SILK_DESCRIP="SILK Audio Decoder/Encoder"
     SILK_OPTION="SKP_SILK_SDK"
     PBX_SILK=0
@@ -44133,6 +44172,103 @@ fi
          PBX_AMR_WB_ENCODER=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_AMR_WB_ENCODER 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_EVS}" != "x1" -a "${USE_EVS}" != "no"; then
+   pbxlibdir=""
+   # if --with-EVS=DIR has been specified, use it.
+   if test "x${EVS_DIR}" != "x"; then
+      if test -d ${EVS_DIR}/lib; then
+         pbxlibdir="-L${EVS_DIR}/lib"
+      else
+         pbxlibdir="-L${EVS_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for evs_enc in -l3gpp-evs" >&5
+printf %s "checking for evs_enc in -l3gpp-evs... " >&6; }
+if test ${ac_cv_lib_3gpp_evs_evs_enc+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l3gpp-evs ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char evs_enc ();
+int
+main (void)
+{
+return evs_enc ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_3gpp_evs_evs_enc=yes
+else $as_nop
+  ac_cv_lib_3gpp_evs_evs_enc=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_3gpp_evs_evs_enc" >&5
+printf "%s\n" "$ac_cv_lib_3gpp_evs_evs_enc" >&6; }
+if test "x$ac_cv_lib_3gpp_evs_evs_enc" = xyes
+then :
+  AST_EVS_FOUND=yes
+else $as_nop
+  AST_EVS_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_EVS_FOUND}" = "yes"; then
+      EVS_LIB="${pbxlibdir} -l3gpp-evs "
+      # if --with-EVS=DIR has been specified, use it.
+      if test "x${EVS_DIR}" != "x"; then
+         EVS_INCLUDE="-I${EVS_DIR}/include"
+      fi
+      EVS_INCLUDE="${EVS_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${EVS_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "3gpp-evs/prot.h" "ac_cv_header_3gpp_evs_prot_h" "$ac_includes_default"
+if test "x$ac_cv_header_3gpp_evs_prot_h" = xyes
+then :
+  EVS_HEADER_FOUND=1
+else $as_nop
+  EVS_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${EVS_HEADER_FOUND}" = "x0" ; then
+         EVS_LIB=""
+         EVS_INCLUDE=""
+      else
+
+         PBX_EVS=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_EVS 1
 _ACEOF
 
       fi

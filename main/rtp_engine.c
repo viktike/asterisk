@@ -2242,9 +2242,6 @@ char *ast_rtp_lookup_mime_multiple2(struct ast_str *buf, struct ast_format_cap *
 		return NULL;
 	}
 
-
-	ast_rtp_engine_load_format(ast_format_gsm_efr);
-
 	if (asterisk_format) {
 		int x;
 		struct ast_format *tmp_fmt;
@@ -4000,6 +3997,9 @@ int ast_rtp_engine_init(void)
 	add_static_payload(126, ast_format_slin48, 0);
 	add_static_payload(127, ast_format_slin96, 0);
 	/* payload types above 127 are not valid */
+
+        ast_rtp_engine_load_format(ast_format_evs);
+	ast_rtp_engine_load_format(ast_format_gsm_efr);
 
 	debug_category_rtp_id = ast_debug_category_register(AST_LOG_CATEGORY_RTP);
 	debug_category_rtp_packet_id = ast_debug_category_register(AST_LOG_CATEGORY_RTP_PACKET);
