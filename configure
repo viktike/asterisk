@@ -1077,6 +1077,10 @@ PBX_FAAC
 FAAC_DIR
 FAAC_INCLUDE
 FAAC_LIB
+PBX_CELT
+CELT_DIR
+CELT_INCLUDE
+CELT_LIB
 PBX_SILK
 SILK_DIR
 SILK_INCLUDE
@@ -1543,6 +1547,7 @@ with_opusfile
 with_broadvoice
 with_3gpp_evs
 with_SKP_SILK_SDK
+with_celt0
 with_faac
 with_hiredis
 with_memcached
@@ -2346,6 +2351,7 @@ Optional Packages:
   --with-3gpp-evs=PATH    use 3GPP EVS Audio Decoder/Encoder files in PATH
   --with-SKP_SILK_SDK=PATH
                           use SILK Audio Decoder/Encoder files in PATH
+  --with-celt0=PATH       use CELT Audio Decoder/Encoder files in PATH
   --with-faac=PATH        use Faac files in PATH
   --with-hiredis=PATH     use hiredis files in PATH
   --with-memcached=PATH   use memcached files in PATH
@@ -23896,6 +23902,39 @@ fi
 
 
 
+    CELT_DESCRIP="CELT Audio Decoder/Encoder"
+    CELT_OPTION="celt0"
+    PBX_CELT=0
+
+# Check whether --with-celt0 was given.
+if test ${with_celt0+y}
+then :
+  withval=$with_celt0;
+	case ${withval} in
+	n|no)
+	USE_CELT=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_CELT=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} CELT"
+	;;
+	*)
+	CELT_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} CELT"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
     FAAC_DESCRIP="Faac"
     FAAC_OPTION="faac"
     PBX_FAAC=0
@@ -43825,6 +43864,102 @@ fi
          PBX_SILK=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_SILK 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+if test "x${PBX_CELT}" != "x1" -a "${USE_CELT}" != "no"; then
+   pbxlibdir=""
+   # if --with-CELT=DIR has been specified, use it.
+   if test "x${CELT_DIR}" != "x"; then
+      if test -d ${CELT_DIR}/lib; then
+         pbxlibdir="-L${CELT_DIR}/lib"
+      else
+         pbxlibdir="-L${CELT_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for celt_encoder_init in -lcelt0" >&5
+printf %s "checking for celt_encoder_init in -lcelt0... " >&6; }
+if test ${ac_cv_lib_celt0_celt_encoder_init+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcelt0 ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char celt_encoder_init ();
+int
+main (void)
+{
+return celt_encoder_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_celt0_celt_encoder_init=yes
+else $as_nop
+  ac_cv_lib_celt0_celt_encoder_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_celt0_celt_encoder_init" >&5
+printf "%s\n" "$ac_cv_lib_celt0_celt_encoder_init" >&6; }
+if test "x$ac_cv_lib_celt0_celt_encoder_init" = xyes
+then :
+  AST_CELT_FOUND=yes
+else $as_nop
+  AST_CELT_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_CELT_FOUND}" = "yes"; then
+      CELT_LIB="${pbxlibdir} -lcelt0 "
+      # if --with-CELT=DIR has been specified, use it.
+      if test "x${CELT_DIR}" != "x"; then
+         CELT_INCLUDE="-I${CELT_DIR}/include"
+      fi
+      CELT_INCLUDE="${CELT_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${CELT_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "celt/celt.h" "ac_cv_header_celt_celt_h" "$ac_includes_default"
+if test "x$ac_cv_header_celt_celt_h" = xyes
+then :
+  CELT_HEADER_FOUND=1
+else $as_nop
+  CELT_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${CELT_HEADER_FOUND}" = "x0" ; then
+         CELT_LIB=""
+         CELT_INCLUDE=""
+      else
+
+         PBX_CELT=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_CELT 1
 _ACEOF
 
       fi

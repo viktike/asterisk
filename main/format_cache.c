@@ -279,6 +279,13 @@ struct ast_format *ast_format_silk16;
 struct ast_format *ast_format_silk24;
 
 /*!
+ * \brief Built-in "celt" format
+ */
+struct ast_format *ast_format_celt32;
+struct ast_format *ast_format_celt44;
+struct ast_format *ast_format_celt48;
+
+/*!
  * \brief Built-in cached BroadVoice16 format.
  */
 struct ast_format *ast_format_bv16;
@@ -399,6 +406,9 @@ static void format_cache_shutdown(void)
 	ao2_replace(ast_format_silk12, NULL);
 	ao2_replace(ast_format_silk16, NULL);
 	ao2_replace(ast_format_silk24, NULL);
+        ao2_replace(ast_format_celt32, NULL);
+        ao2_replace(ast_format_celt44, NULL);
+        ao2_replace(ast_format_celt48, NULL);
 	ao2_replace(ast_format_bv16, NULL);
 	ao2_replace(ast_format_bv32, NULL);
 }
@@ -516,6 +526,12 @@ static void set_cached_format(const char *name, struct ast_format *format)
                 ao2_replace(ast_format_bv16, format);
         } else if (!strcmp(name, "bv32")) {
                 ao2_replace(ast_format_bv32, format);
+	} else if (!strcmp(name, "celt32")) {
+                ao2_replace(ast_format_celt32, format);
+        } else if (!strcmp(name, "celt44")) {
+                ao2_replace(ast_format_celt44, format);
+        } else if (!strcmp(name, "celt48")) {
+                ao2_replace(ast_format_celt48, format);
 	} else if (!strcmp(name, "silk8")) {
 		ao2_replace(ast_format_silk8, format);
 	} else if (!strcmp(name, "silk12")) {

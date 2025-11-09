@@ -948,6 +948,53 @@ static struct ast_codec silk24 = {
 	.samples_count = silk_samples
 };
 
+
+static int celt_samples(struct ast_frame *frame)
+{
+        /* XXX This is likely not at all what's intended from this callback. However,
+         * since SILK is variable bit rate, I have no idea how to take a frame of data
+         * and determine the number of samples present. Instead, we base this on the
+         * sample rate of the codec and the expected number of samples to receive in 20ms.
+         */
+        return ast_format_get_sample_rate(frame->subclass.format) / 50;
+}
+
+static struct ast_codec celt32 = {
+        .name = "celt",
+        .description = "CELT Codec (32 KHz)",
+        .type = AST_MEDIA_TYPE_AUDIO,
+        .sample_rate = 32000,
+        .minimum_ms = 20,
+        .maximum_ms = 100,
+        .default_ms = 20,
+        .minimum_bytes = 640,
+        .samples_count = celt_samples
+};
+
+static struct ast_codec celt44 = {
+        .name = "celt",
+        .description = "CELT Codec (44 KHz)",
+        .type = AST_MEDIA_TYPE_AUDIO,
+        .sample_rate = 44100,
+        .minimum_ms = 20,
+        .maximum_ms = 100,
+        .default_ms = 20,
+        .minimum_bytes = 882,
+        .samples_count = celt_samples
+};
+
+static struct ast_codec celt48 = {
+        .name = "celt",
+        .description = "CELT Codec (48 KHz)",
+        .type = AST_MEDIA_TYPE_AUDIO,
+        .sample_rate = 48000,
+        .minimum_ms = 20,
+        .maximum_ms = 100,
+        .default_ms = 20,
+        .minimum_bytes = 960,
+        .samples_count = celt_samples
+};
+
 static int amr_samples(struct ast_frame *frame)
 {
 	return 160;
@@ -1112,6 +1159,10 @@ int ast_codec_builtin_init(void)
 	res |= CODEC_REGISTER_AND_CACHE_NAMED("silk12", silk12);
 	res |= CODEC_REGISTER_AND_CACHE_NAMED("silk16", silk16);
 	res |= CODEC_REGISTER_AND_CACHE_NAMED("silk24", silk24);
+
+        res |= CODEC_REGISTER_AND_CACHE_NAMED("celt32", celt32);
+        res |= CODEC_REGISTER_AND_CACHE_NAMED("celt44", celt44);
+        res |= CODEC_REGISTER_AND_CACHE_NAMED("celt48", celt48);
 
 	return res;
 }

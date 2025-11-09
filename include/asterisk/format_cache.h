@@ -282,6 +282,22 @@ extern struct ast_format *ast_format_bv16;
 extern struct ast_format *ast_format_bv32;
 
 /*!
+ * \brief Built-in cached CELT 32khz format.
+ */
+extern struct ast_format *ast_format_celt32;
+
+/*!
+ * \brief Built-in cached CELT 44khz format.
+ */
+extern struct ast_format *ast_format_celt44;
+
+/*!
+ * \brief Built-in cached CELT 48khz format.
+ */
+extern struct ast_format *ast_format_celt48;
+
+
+/*!
  * \brief Initialize format cache support within the core.
  *
  * \retval 0 success

@@ -3930,6 +3930,10 @@ int ast_rtp_engine_init(void)
 	set_next_mime_type(ast_format_silk16, 0,  "audio", "SILK", 16000);
 	set_next_mime_type(ast_format_silk24, 0,  "audio", "SILK", 24000);
 
+        set_next_mime_type(ast_format_celt32, 0,  "audio", "CELT", 32000);
+        set_next_mime_type(ast_format_celt44, 0,  "audio", "CELT", 44100);
+        set_next_mime_type(ast_format_celt48, 0,  "audio", "CELT", 48000);
+
 	/* Define the static rtp payload mappings */
 	add_static_payload(0, ast_format_ulaw, 0);
 	#ifdef USE_DEPRECATED_G726
@@ -3978,6 +3982,10 @@ int ast_rtp_engine_init(void)
 	add_static_payload(-1, ast_format_silk12, 0);
 	add_static_payload(-1, ast_format_silk16, 0);
 	add_static_payload(-1, ast_format_silk24, 0);
+
+        add_static_payload(-1, ast_format_celt32, 0);
+        add_static_payload(-1, ast_format_celt44, 0);
+        add_static_payload(-1, ast_format_celt48, 0)
 
 	add_static_payload(-1, ast_format_amr, 0);
 	add_static_payload(-1, ast_format_amrwb, 0);
