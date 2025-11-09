@@ -41,6 +41,10 @@
 	<defaultenabled>no</defaultenabled>
 	<support_level>extended</support_level>
   </member>
+  <member name="astconv">
+        <defaultenabled>no</defaultenabled>
+        <support_level>extended</support_level>
+  </member>
   <member name="conf_bridge_binaural_hrir_importer"
     displayname="Impulse Noise wav to hrirs.h generator"
     remove_on_change="conf_bridge_binaural_hrir_importer">

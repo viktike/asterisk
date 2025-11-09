@@ -94,6 +94,8 @@ astman: LIBS+=$(NEWT_LIB)
 stereorize: stereorize.o frame.o
 stereorize: LIBS+=-lm
 
+astconv: CFLAGS+=-I../include -D_GNU_SOURCE -ldl -lm -O2 -s -rdynamic -Wall
+
 astmm.c: $(ASTTOPDIR)/main/astmm.c
 	$(ECHO_PREFIX) echo "   [CP] $(subst $(ASTTOPDIR)/,,$<) -> $@"
 	$(CMD_PREFIX) cp "$<" "$@"
