@@ -554,6 +554,7 @@ AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [ope
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
 AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
 AST_EXT_LIB_SETUP([BFD], [Debug symbol decoding], [bfd])
+AST_EXT_LIB_SETUP([BCG729], [BelledonneCommunications G.729 (Linphone)], [bcg729])
 
 # BKTR is used for backtrace support on platforms that do not
 # have it natively.
@@ -2676,6 +2677,8 @@ AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amr
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
 
 AST_EXT_LIB_CHECK([EVS], [3gpp-evs], [evs_enc], [3gpp-evs/prot.h])
+
+AST_EXT_LIB_CHECK([BCG729], [bcg729], [bcg729Encoder], [bcg729/encoder.h])
 
 # opusfile.h includes <opus_multistream.h> so we need to make sure that
 # either $OPUS_INCLUDE or /usr/include/opus is added to the search path.

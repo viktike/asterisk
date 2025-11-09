@@ -1260,6 +1260,10 @@ PBX_BKTR
 BKTR_DIR
 BKTR_INCLUDE
 BKTR_LIB
+PBX_BCG729
+BCG729_DIR
+BCG729_INCLUDE
+BCG729_LIB
 PBX_BFD
 BFD_DIR
 BFD_INCLUDE
@@ -1504,6 +1508,7 @@ with_opencore_amrnb
 with_opencore_amrwb
 with_vo_amrwbenc
 with_bfd
+with_bcg729
 with_execinfo
 with_bluetooth
 with_cap
@@ -2304,6 +2309,8 @@ Optional Packages:
   --with-vo-amrwbenc=PATH use AMR-WB Audio Codec (Wideband) Encoder files in
                           PATH
   --with-bfd=PATH         use Debug symbol decoding files in PATH
+  --with-bcg729=PATH      use BelledonneCommunications G.729 (Linphone) files
+                          in PATH
   --with-execinfo=PATH    use Stack Backtrace files in PATH
   --with-bluetooth=PATH   use Bluetooth files in PATH
   --with-cap=PATH         use POSIX 1.e capabilities files in PATH
@@ -22056,6 +22063,39 @@ then :
 	*)
 	BFD_DIR="${withval}"
 	ac_mandatory_list="${ac_mandatory_list} BFD"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    BCG729_DESCRIP="BelledonneCommunications G.729 (Linphone)"
+    BCG729_OPTION="bcg729"
+    PBX_BCG729=0
+
+# Check whether --with-bcg729 was given.
+if test ${with_bcg729+y}
+then :
+  withval=$with_bcg729;
+	case ${withval} in
+	n|no)
+	USE_BCG729=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_BCG729=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} BCG729"
+	;;
+	*)
+	BCG729_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} BCG729"
 	;;
 	esac
 
@@ -44539,6 +44579,103 @@ fi
          PBX_EVS=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_EVS 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_BCG729}" != "x1" -a "${USE_BCG729}" != "no"; then
+   pbxlibdir=""
+   # if --with-BCG729=DIR has been specified, use it.
+   if test "x${BCG729_DIR}" != "x"; then
+      if test -d ${BCG729_DIR}/lib; then
+         pbxlibdir="-L${BCG729_DIR}/lib"
+      else
+         pbxlibdir="-L${BCG729_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for bcg729Encoder in -lbcg729" >&5
+printf %s "checking for bcg729Encoder in -lbcg729... " >&6; }
+if test ${ac_cv_lib_bcg729_bcg729Encoder+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbcg729 ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char bcg729Encoder ();
+int
+main (void)
+{
+return bcg729Encoder ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_bcg729_bcg729Encoder=yes
+else $as_nop
+  ac_cv_lib_bcg729_bcg729Encoder=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_bcg729_bcg729Encoder" >&5
+printf "%s\n" "$ac_cv_lib_bcg729_bcg729Encoder" >&6; }
+if test "x$ac_cv_lib_bcg729_bcg729Encoder" = xyes
+then :
+  AST_BCG729_FOUND=yes
+else $as_nop
+  AST_BCG729_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_BCG729_FOUND}" = "yes"; then
+      BCG729_LIB="${pbxlibdir} -lbcg729 "
+      # if --with-BCG729=DIR has been specified, use it.
+      if test "x${BCG729_DIR}" != "x"; then
+         BCG729_INCLUDE="-I${BCG729_DIR}/include"
+      fi
+      BCG729_INCLUDE="${BCG729_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${BCG729_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "bcg729/encoder.h" "ac_cv_header_bcg729_encoder_h" "$ac_includes_default"
+if test "x$ac_cv_header_bcg729_encoder_h" = xyes
+then :
+  BCG729_HEADER_FOUND=1
+else $as_nop
+  BCG729_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${BCG729_HEADER_FOUND}" = "x0" ; then
+         BCG729_LIB=""
+         BCG729_INCLUDE=""
+      else
+
+         PBX_BCG729=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_BCG729 1
 _ACEOF
 
       fi
