@@ -3985,7 +3985,7 @@ int ast_rtp_engine_init(void)
 
         add_static_payload(-1, ast_format_celt32, 0);
         add_static_payload(-1, ast_format_celt44, 0);
-        add_static_payload(-1, ast_format_celt48, 0)
+        add_static_payload(-1, ast_format_celt48, 0);
 
 	add_static_payload(-1, ast_format_amr, 0);
 	add_static_payload(-1, ast_format_amrwb, 0);

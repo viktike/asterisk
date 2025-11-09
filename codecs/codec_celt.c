@@ -47,7 +47,6 @@ static int celt_compute_frame_size(int rate)
 static int celt_encode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 {
 	struct celt_coder_pvt *state = pvt->pvt;
-	struct ast_format *format;
 	int16_t *pcm = (int16_t *) f->data.ptr;
 	int encoded;
 
@@ -61,9 +60,7 @@ static int celt_encode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 		return -1;
 	}
 
-	// TODO
-
-	ast_trans_frameout(pvt, ???);
+	ast_trans_frameout(pvt, encoded, state->frame_size);
 
 	return 0;
 }
@@ -82,9 +79,8 @@ static int celt_decode_frame(struct ast_trans_pvt *pvt, struct ast_frame *f)
 		return -1;
 	}
 
-	// TODO
+	ast_trans_frameout(pvt, state->frame_size * sizeof(int16_t), state->frame_size);
 
-	ast_trans_frameout(pvt, ???);
 	return 0;
 }
 
@@ -125,12 +121,12 @@ static void celt_destroy(struct ast_trans_pvt *pvt)
 static struct ast_translator celt32tolin32 = {
 	.name = "celt32tolin32",
 	.src_codec = {
-		.name = "celt32",
+		.name = "celt",
 		.type = AST_MEDIA_TYPE_AUDIO,
 		.sample_rate = 32000
 	},
 	.dst_codec = {
-		.name = "slin32",
+		.name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 32000
 	},
@@ -143,12 +139,12 @@ static struct ast_translator celt32tolin32 = {
 static struct ast_translator lin32tocelt32 = {
 	.name = "lin32tocelt32",
 	.src_codec = {
-                .name = "slin32",
+                .name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 32000
         },
 	.dst_codec = {
-                .name = "celt32",
+                .name = "celt",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 32000
         },
@@ -162,12 +158,12 @@ static struct ast_translator lin32tocelt32 = {
 static struct ast_translator celt44tolin44 = {
         .name = "celt44tolin44",
         .src_codec = {
-                .name = "celt44",
+                .name = "celt",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 44100
         },
         .dst_codec = {
-                .name = "slin44",
+                .name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 44100
         },
@@ -180,12 +176,12 @@ static struct ast_translator celt44tolin44 = {
 static struct ast_translator lin44tocelt44 = {
         .name = "lin44tocelt44",
 	.src_codec = {
-                .name = "slin44",
+                .name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 44100
         },
         .dst_codec = {
-                .name = "celt44",
+                .name = "celt",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 44100
         },
@@ -199,12 +195,12 @@ static struct ast_translator lin44tocelt44 = {
 static struct ast_translator celt48tolin48 = {
         .name = "celt48tolin48",
         .src_codec = {
-                .name = "celt48",
+                .name = "celt",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 48000
         },
         .dst_codec = {
-                .name = "slin48",
+                .name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 48000
         },
@@ -217,12 +213,12 @@ static struct ast_translator celt48tolin48 = {
 static struct ast_translator lin48tocelt48 = {
         .name = "lin48tocelt48",
         .src_codec = {
-                .name = "slin48",
+                .name = "slin",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 48000
         },
         .dst_codec = {
-                .name = "celt48",
+                .name = "celt",
                 .type = AST_MEDIA_TYPE_AUDIO,
                 .sample_rate = 48000
         },
