@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define AST_MODULE_SELF_SYM __internal_g723_self
+// #define AST_MODULE_SELF_SYM __internal_g723_self
 #define ASTMM_LIBC ASTMM_IGNORE
 
     #ifdef ASTERISK_ASTERISK_H
@@ -66,7 +66,6 @@
     #define OUTBUF_SLIN outbuf.i16
     #define OUTBUF_G72X outbuf.uc
 
-#define AST_MODULE "codec_" G72X_CODEC
 #define G72X_DESC G72X_CODEC " Coder/Decoder, based on ITU-T code"
 
 /* ITU-T G.723.1 reference implementation operates on global variables */

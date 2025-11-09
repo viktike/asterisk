@@ -82,6 +82,8 @@ $(SUB_ILBC):
 
 $(call MOD_ADD_C,codec_g722,g722/g722_encode.c g722/g722_decode.c)
 
+$(call MOD_ADD_C,codec_itu_g723,$(wildcard itu/g.723.1a/*.c))
+$(call MOD_ADD_C,codec_itu_g729,$(wildcard itu/g.729a/*.c))
 
 ifeq ($(BUILD_CPU),x86_64)
 SPEEX_RESAMPLE_CFLAGS:=-fPIC
