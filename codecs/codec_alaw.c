@@ -111,12 +111,52 @@ static struct ast_translator lintoalaw = {
 	.buf_size = BUFFER_SAMPLES,
 };
 
+static struct ast_translator alawtolin16 = {
+       .name = "alawtolin16",
+       .src_codec = {
+               .name = "alaw16",
+               .type = AST_MEDIA_TYPE_AUDIO,
+               .sample_rate = 16000,
+       },
+       .dst_codec = {
+               .name = "slin",
+               .type = AST_MEDIA_TYPE_AUDIO,
+               .sample_rate = 16000,
+       },
+       .format = "slin16",
+       .framein = alawtolin_framein,
+       //.sample = alaw16_sample,
+       .buffer_samples = BUFFER_SAMPLES,
+       .buf_size = BUFFER_SAMPLES * 2,
+};
+ 
+static struct ast_translator lin16toalaw = {
+       .name = "lin16toalaw",
+       .src_codec = {
+               .name = "slin",
+               .type = AST_MEDIA_TYPE_AUDIO,
+               .sample_rate = 16000,
+       },
+       .dst_codec = {
+               .name = "alaw16",
+               .type = AST_MEDIA_TYPE_AUDIO,
+               .sample_rate = 16000,
+       },
+       .format = "alaw16",
+       .framein = lintoalaw_framein,
+       .sample = slin16_sample,
+       .buffer_samples = BUFFER_SAMPLES,
+       .buf_size = BUFFER_SAMPLES,
+};
+
 static int unload_module(void)
 {
 	int res;
 
 	res = ast_unregister_translator(&lintoalaw);
 	res |= ast_unregister_translator(&alawtolin);
+	res |= ast_unregister_translator(&lin16toalaw);
+	res |= ast_unregister_translator(&alawtolin16);
 
 	return res;
 }
@@ -127,6 +167,8 @@ static int load_module(void)
 
 	res = ast_register_translator(&alawtolin);
 	res |= ast_register_translator(&lintoalaw);
+	res |= ast_register_translator(&alawtolin16);
+	res |= ast_register_translator(&lin16toalaw);
 
 	if (res) {
 		unload_module();

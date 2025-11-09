@@ -191,6 +191,20 @@ static struct ast_codec alaw = {
 	.smooth = 1,
 };
 
+static struct ast_codec alaw16 = {
+       .name = "alaw16",
+       .description = "PCMA 16",
+       .type = AST_MEDIA_TYPE_AUDIO,
+       .sample_rate = 16000,
+       .minimum_ms = 10,
+       .maximum_ms = 150,
+       .default_ms = 10,
+       .minimum_bytes = 160,
+       .samples_count = ulaw_samples,
+       .get_length = ulaw_length,
+       .smooth = 1,
+};
+
 static int gsm_samples(struct ast_frame *frame)
 {
 	return 160 * (frame->datalen / 33);
@@ -1008,17 +1022,14 @@ int ast_codec_builtin_init(void)
 	int res = 0;
 
 	res |= CODEC_REGISTER_AND_CACHE(evs);
-
-
 	res |= CODEC_REGISTER_AND_CACHE(gsm_efr);
-
 	res |= CODEC_REGISTER_AND_CACHE(amr);
 	res |= CODEC_REGISTER_AND_CACHE(amrwb);
-
 	res |= CODEC_REGISTER_AND_CACHE(codec2);
 	res |= CODEC_REGISTER_AND_CACHE(g723);
 	res |= CODEC_REGISTER_AND_CACHE(ulaw);
 	res |= CODEC_REGISTER_AND_CACHE(alaw);
+	res |= CODEC_REGISTER_AND_CACHE(alaw16);
 	res |= CODEC_REGISTER_AND_CACHE(gsm);
 	res |= CODEC_REGISTER_AND_CACHE(g726rfc3551);
 	res |= CODEC_REGISTER_AND_CACHE(g726aal2);

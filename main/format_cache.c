@@ -91,6 +91,11 @@ struct ast_format *ast_format_ulaw;
 struct ast_format *ast_format_alaw;
 
 /*!
+ * \brief Built-in cached PCMA 16 format.
+ */
+struct ast_format *ast_format_alaw16;
+
+/*!
  * \brief Built-in cached gsm format.
  */
 struct ast_format *ast_format_gsm;
@@ -335,14 +340,12 @@ static void format_cache_shutdown(void)
 
 	ao2_replace(ast_format_amr, NULL);
 	ao2_replace(ast_format_amrwb, NULL);
-
 	ao2_replace(ast_format_gsm_efr, NULL);
-
 	ao2_replace(ast_format_evs, NULL);
-
 	ao2_replace(ast_format_g723, NULL);
 	ao2_replace(ast_format_ulaw, NULL);
 	ao2_replace(ast_format_alaw, NULL);
+	ao2_replace(ast_format_alaw16, NULL);
 	ao2_replace(ast_format_gsm, NULL);
 	ao2_replace(ast_format_g726, NULL);
 	ao2_replace(ast_format_g726_aal2, NULL);
@@ -411,6 +414,8 @@ static void set_cached_format(const char *name, struct ast_format *format)
 		ao2_replace(ast_format_ulaw, format);
 	} else if (!strcmp(name, "alaw")) {
 		ao2_replace(ast_format_alaw, format);
+        } else if (!strcmp(name, "alaw16")) {
+                ao2_replace(ast_format_alaw16, format);
 	} else if (!strcmp(name, "gsm")) {
 		ao2_replace(ast_format_gsm, format);
 	} else if (!strcmp(name, "g726")) {

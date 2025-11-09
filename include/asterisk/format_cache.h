@@ -84,6 +84,11 @@ extern struct ast_format *ast_format_ulaw;
 extern struct ast_format *ast_format_alaw;
 
 /*!
+ * \brief Built-in PCMA 16 format.
+ */
+extern struct ast_format *ast_format_alaw16;
+
+/*!
  * \brief Built-in cached gsm format.
  */
 extern struct ast_format *ast_format_gsm;

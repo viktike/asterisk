@@ -3872,6 +3872,7 @@ int ast_rtp_engine_init(void)
 	set_next_mime_type(ast_format_ulaw, 0, "audio", "G711U", 8000);
 	set_next_mime_type(ast_format_alaw, 0, "audio", "PCMA", 8000);
 	set_next_mime_type(ast_format_alaw, 0, "audio", "G711A", 8000);
+	set_next_mime_type(ast_format_alaw16, 0,  "audio", "PCMA", 16000);
 	set_next_mime_type(ast_format_g726, 0, "audio", "G726-32", 8000);
 	set_next_mime_type(ast_format_adpcm, 0, "audio", "DVI4", 8000);
 	set_next_mime_type(ast_format_slin, 0, "audio", "L16", 8000);
@@ -3980,6 +3981,9 @@ int ast_rtp_engine_init(void)
 
 	add_static_payload(-1, ast_format_amr, 0);
 	add_static_payload(-1, ast_format_amrwb, 0);
+	
+	add_static_payload(-1, ast_format_alaw16, 0);
+
 	add_static_payload(111, ast_format_g726, 0);
 	add_static_payload(112, ast_format_g726_aal2, 0);
 
