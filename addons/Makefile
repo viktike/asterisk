@@ -36,6 +36,7 @@ ALL_C_MODS:=chan_mobile \
             func_redis \
             res_json \
 	    res_memcached \
+	    app_flite \
 	    app_pgsql \
 	    app_mysql \
 	    cdr_mysql \
@@ -69,6 +70,7 @@ include $(ASTTOPDIR)/Makefile.moddir_rules
 
 chan_mobile.o: _ASTCFLAGS+=$(AST_NO_FORMAT_TRUNCATION)
 chan_ooh323.so: _ASTCFLAGS+=$(H323CFLAGS)
+app_flite.so: _ASTLDFLAGS+=-lflite_cmu_us_kal -lflite_cmu_us_kal16 -lflite_cmu_us_awb -lflite_cmu_us_rms -lflite_cmu_us_slt -lflite_usenglish -lflite_cmulex -lflite_cmu_us_slt
 $(call MOD_ADD_C,chan_ooh323,$(H323SOURCE))
 
 ifneq ($(wildcard mp3/Makefile),)

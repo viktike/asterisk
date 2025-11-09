@@ -551,6 +551,7 @@ THIRD_PARTY_CONFIGURE()
 
 
 AST_EXT_LIB_SETUP([IPP], [Intel(R) Integrated Performance Primitives Speech Coding], [ippsc])
+AST_EXT_LIB_SETUP([FLITE], [A small fast portable speech synthesis system], [flite])
 AST_EXT_LIB_SETUP([ALSA], [Advanced Linux Sound Architecture], [asound])
 AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [opencore-amrnb])
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
@@ -2679,6 +2680,8 @@ AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amr
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
 
 AST_EXT_LIB_CHECK([IPP], [ippsc], [ippscGetLibVersion], [ippsc.h])
+
+AST_EXT_LIB_CHECK([FLITE], [flite], [flite_init], [flite/flite.h])
 
 AST_EXT_LIB_CHECK([EVS], [3gpp-evs], [evs_enc], [3gpp-evs/prot.h])
 

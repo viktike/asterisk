@@ -28,7 +28,7 @@
 #include "asterisk/config_options.h"
 #include "internal.h"
 
-#include <amqp.h>
+#include <rabbitmq-c/amqp.h>
 
 /*! \brief Locking container for safe configuration access. */
 static AO2_GLOBAL_OBJ_STATIC(confs);
