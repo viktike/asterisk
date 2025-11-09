@@ -26,7 +26,7 @@
 /*** MODULEINFO
 	<depend>faac</depend>
 	<depend>faad</depend>
-	<defaultenabled>no</defaultenabled>
+	<defaultenabled>yes</defaultenabled>
 	<support_level>extended</support_level>
  ***/
 
