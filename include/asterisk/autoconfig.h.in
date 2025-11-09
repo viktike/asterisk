@@ -451,6 +451,10 @@
 /* Define to 1 if you have the `ioperm' function. */
 #undef HAVE_IOPERM
 
+/* Define to 1 if you have the Intel(R) Integrated Performance Primitives
+   Speech Coding library. */
+#undef HAVE_IPP
+
 /* Define if your system has the IP_MTU_DISCOVER headers. */
 #undef HAVE_IP_MTU_DISCOVER
 

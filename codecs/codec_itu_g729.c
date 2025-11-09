@@ -1,6 +1,7 @@
 /*** MODULEINFO
         <conflict>codec_g729</conflict>
 	<conflict>codec_bcg729</conflict>
+	<conflict>codec_ipp_g729</conflict>
         <support_level>extended</support_level>
  ***/
 

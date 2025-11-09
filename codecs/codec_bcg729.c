@@ -31,6 +31,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 /*** MODULEINFO
         <depend>bcg729</depend>
 	<conflict>codec_itu_g729</conflict>
+	<conflict>codec_ipp_g729</conflict>
 	<conflict>codec_g729</conflict>
         <defaultenabled>yes</defaultenabled>
         <support_level>extended</support_level>

@@ -549,6 +549,8 @@ THIRD_PARTY_CONFIGURE()
 # by the --with option name (the third field),
 # to make things easier for the users.
 
+
+AST_EXT_LIB_SETUP([IPP], [Intel(R) Integrated Performance Primitives Speech Coding], [ippsc])
 AST_EXT_LIB_SETUP([ALSA], [Advanced Linux Sound Architecture], [asound])
 AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [opencore-amrnb])
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
@@ -2675,6 +2677,8 @@ AST_EXT_LIB_CHECK([BV], [broadvoice], [bv32_encode], [broadvoice/broadvoice.h])
 AST_EXT_LIB_CHECK([AMR_NB], [opencore-amrnb], [Encoder_Interface_init], [opencore-amrnb/interf_enc.h])
 AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amrwb/dec_if.h])
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
+
+AST_EXT_LIB_CHECK([IPP], [ippsc], [ippscGetLibVersion], [ippsc.h])
 
 AST_EXT_LIB_CHECK([EVS], [3gpp-evs], [evs_enc], [3gpp-evs/prot.h])
 

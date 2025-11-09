@@ -212,3 +212,6 @@ packetloss_percentage=10;
 ;max_bandwidth=wide ; Maximum encoded bandwidth set to wide band (0-8000 Hz
 ;                   ; audio bandwidth at 16Khz sample rate)
 ;cbr=yes ; Negotiate a constant bit rate
+
+[g723]
+sendrate=63 ; or 53
