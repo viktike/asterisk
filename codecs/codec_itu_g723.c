@@ -276,6 +276,8 @@ static void g72x_destroy(struct ast_trans_pvt *pvt)
 
 static struct ast_translator g72xtolin = {
     .name = G72X_CODEC "tolin",
+    .src_codec = { .name = G72X_CODEC, .type = AST_MEDIA_TYPE_AUDIO, .sample_rate = 8000 },
+    .dst_codec = { .name = "slin",     .type = AST_MEDIA_TYPE_AUDIO, .sample_rate = 8000 },
     .newpvt = g72xtolin_new,
     .framein = g72xtolin_framein,
     .destroy = g72x_destroy,
@@ -287,6 +289,8 @@ static struct ast_translator g72xtolin = {
 
 static struct ast_translator lintog72x = {
     .name = "linto" G72X_CODEC,
+    .src_codec = { .name = "slin",     .type = AST_MEDIA_TYPE_AUDIO, .sample_rate = 8000 },
+    .dst_codec = { .name = G72X_CODEC, .type = AST_MEDIA_TYPE_AUDIO, .sample_rate = 8000 },
     .newpvt = lintog72x_new,
     .framein = lintog72x_framein,
     .frameout = lintog72x_frameout,
