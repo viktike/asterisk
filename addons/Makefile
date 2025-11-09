@@ -36,6 +36,7 @@ ALL_C_MODS:=chan_mobile \
             func_redis \
             res_json \
 	    res_memcached \
+	    app_parrot \
 	    app_flite \
 	    app_pgsql \
 	    app_mysql \
