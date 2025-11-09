@@ -21,7 +21,7 @@
 
 #include "asterisk/stringfields.h"
 
-#include <amqp.h>
+#include <rabbitmq-c/amqp.h>
 
 /*! \file
  *

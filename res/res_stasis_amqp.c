@@ -404,7 +404,6 @@ static int manager_event_to_json(struct ast_json *json, const char *event_name, 
 {
 	struct ast_json *json_value = NULL;
 	char *line = NULL;
-	char *word = NULL;
 	char *key, *value;
 
 	if (!(json_value = ast_json_string_create(event_name))) {

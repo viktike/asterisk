@@ -89,9 +89,9 @@
 #include "asterisk/amqp.h"
 #include "amqp/internal.h"
 
-#include <amqp.h>
-#include <amqp_framing.h>
-#include <amqp_tcp_socket.h>
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/framing.h>
+#include <rabbitmq-c/tcp_socket.h>
 
 
 #define NUM_ACTIVE_CONNECTION_BUCKETS 31

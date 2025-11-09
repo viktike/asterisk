@@ -38,7 +38,7 @@
  * to using the API, we've omitted that feature.
  */
 
-#include <amqp.h>
+#include <rabbitmq-c/amqp.h>
 
 /*!
  * Opaque handle for the AMQP connection.
