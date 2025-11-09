@@ -44,11 +44,11 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revision: $")
 #include <netinet/in.h>             /* for htonl, htons, ntohl, ntohs */
 #include <sys/time.h>               /* for timeval = ast_filestream->ast_frame.delivery */
 
-#include "asterisk/format_cache.h"  /* for ast_format_vp8 */
 #include "asterisk/frame.h"         /* for ast_frame, AST_FRIENDLY_OFFSET */
 #include "asterisk/logger.h"        /* for ast_log, LOG_WARNING */
 #include "asterisk/mod_format.h"    /* for ast_filestream, ast_format_def */
 #include "asterisk/module.h"
+#include "asterisk/format_cache.h"  /* for ast_format_vp8 */
 
 /* VP8 passthrough */
 #define FRAME_ENDED	0x8000

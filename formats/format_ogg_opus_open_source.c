@@ -33,7 +33,6 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revision: $")
 
 #include <fcntl.h>                  /* for SEEK_CUR, SEEK_END, SEEK_SET */
 
-#include "asterisk/format_cache.h"  /* for ast_format_slin48 */
 #include "asterisk/frame.h"         /* for ast_frame, AST_FRIENDLY_OFFSET */
 #include "asterisk/logger.h"        /* for ast_log, LOG_ERROR, AST_LOG_ERROR */
 #include "asterisk/mod_format.h"    /* for ast_filestream, ast_format_def */
@@ -43,6 +42,7 @@ ASTERISK_FILE_VERSION(__FILE__, "$Revision: $")
 #include "asterisk/format.h"        /* for ast_format_get_... */
 #include "asterisk/utils.h"         /* for ast_flags */
 #endif
+#include "asterisk/format_cache.h"  /* for ast_format_slin48 */
 
 #include <opus/opus.h>
 #include <opus/opusfile.h>
