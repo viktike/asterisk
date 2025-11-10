@@ -1,6 +1,7 @@
 aelbison.c
 aelparse
 aelparse.c
+astconv
 ast_expr2.c
 ast_expr2f.c
 astmm.c

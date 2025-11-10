@@ -1264,6 +1264,10 @@ PBX_BCG729
 BCG729_DIR
 BCG729_INCLUDE
 BCG729_LIB
+PBX_ZMQ
+ZMQ_DIR
+ZMQ_INCLUDE
+ZMQ_LIB
 PBX_BFD
 BFD_DIR
 BFD_INCLUDE
@@ -1523,6 +1527,7 @@ with_opencore_amrnb
 with_opencore_amrwb
 with_vo_amrwbenc
 with_bfd
+with_zmq
 with_bcg729
 with_execinfo
 with_bluetooth
@@ -2329,6 +2334,7 @@ Optional Packages:
   --with-vo-amrwbenc=PATH use AMR-WB Audio Codec (Wideband) Encoder files in
                           PATH
   --with-bfd=PATH         use Debug symbol decoding files in PATH
+  --with-zmq=PATH         use Zero Message Queue files in PATH
   --with-bcg729=PATH      use BelledonneCommunications G.729 (Linphone) files
                           in PATH
   --with-execinfo=PATH    use Stack Backtrace files in PATH
@@ -22183,6 +22189,39 @@ then :
 	*)
 	BFD_DIR="${withval}"
 	ac_mandatory_list="${ac_mandatory_list} BFD"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    ZMQ_DESCRIP="Zero Message Queue"
+    ZMQ_OPTION="zmq"
+    PBX_ZMQ=0
+
+# Check whether --with-zmq was given.
+if test ${with_zmq+y}
+then :
+  withval=$with_zmq;
+	case ${withval} in
+	n|no)
+	USE_ZMQ=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_ZMQ=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} ZMQ"
+	;;
+	*)
+	ZMQ_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} ZMQ"
 	;;
 	esac
 
@@ -44602,6 +44641,103 @@ fi
          PBX_AMR_WB_ENCODER=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_AMR_WB_ENCODER 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_ZMQ}" != "x1" -a "${USE_ZMQ}" != "no"; then
+   pbxlibdir=""
+   # if --with-ZMQ=DIR has been specified, use it.
+   if test "x${ZMQ_DIR}" != "x"; then
+      if test -d ${ZMQ_DIR}/lib; then
+         pbxlibdir="-L${ZMQ_DIR}/lib"
+      else
+         pbxlibdir="-L${ZMQ_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for zmq_version in -lzmq" >&5
+printf %s "checking for zmq_version in -lzmq... " >&6; }
+if test ${ac_cv_lib_zmq_zmq_version+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzmq ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char zmq_version ();
+int
+main (void)
+{
+return zmq_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_zmq_zmq_version=yes
+else $as_nop
+  ac_cv_lib_zmq_zmq_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zmq_zmq_version" >&5
+printf "%s\n" "$ac_cv_lib_zmq_zmq_version" >&6; }
+if test "x$ac_cv_lib_zmq_zmq_version" = xyes
+then :
+  AST_ZMQ_FOUND=yes
+else $as_nop
+  AST_ZMQ_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_ZMQ_FOUND}" = "yes"; then
+      ZMQ_LIB="${pbxlibdir} -lzmq "
+      # if --with-ZMQ=DIR has been specified, use it.
+      if test "x${ZMQ_DIR}" != "x"; then
+         ZMQ_INCLUDE="-I${ZMQ_DIR}/include"
+      fi
+      ZMQ_INCLUDE="${ZMQ_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${ZMQ_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "zmq.h" "ac_cv_header_zmq_h" "$ac_includes_default"
+if test "x$ac_cv_header_zmq_h" = xyes
+then :
+  ZMQ_HEADER_FOUND=1
+else $as_nop
+  ZMQ_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${ZMQ_HEADER_FOUND}" = "x0" ; then
+         ZMQ_LIB=""
+         ZMQ_INCLUDE=""
+      else
+
+         PBX_ZMQ=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_ZMQ 1
 _ACEOF
 
       fi

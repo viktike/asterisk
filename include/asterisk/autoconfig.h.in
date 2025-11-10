@@ -1380,6 +1380,9 @@
 /* Define to 1 if you have the zlib compression library. */
 #undef HAVE_ZLIB
 
+/* Define to 1 if you have the Zero Message Queue library. */
+#undef HAVE_ZMQ
+
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 

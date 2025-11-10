@@ -558,6 +558,7 @@ AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [ope
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
 AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
 AST_EXT_LIB_SETUP([BFD], [Debug symbol decoding], [bfd])
+AST_EXT_LIB_SETUP([ZMQ], [Zero Message Queue], [zmq])
 AST_EXT_LIB_SETUP([BCG729], [BelledonneCommunications G.729 (Linphone)], [bcg729])
 
 # BKTR is used for backtrace support on platforms that do not
@@ -2679,6 +2680,8 @@ AST_EXT_LIB_CHECK([BV], [broadvoice], [bv32_encode], [broadvoice/broadvoice.h])
 AST_EXT_LIB_CHECK([AMR_NB], [opencore-amrnb], [Encoder_Interface_init], [opencore-amrnb/interf_enc.h])
 AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amrwb/dec_if.h])
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
+
+AST_EXT_LIB_CHECK([ZMQ], [zmq], [zmq_version], [zmq.h])
 
 AST_EXT_LIB_CHECK([IPP], [ippsc], [ippscGetLibVersion], [ippsc.h])
 
