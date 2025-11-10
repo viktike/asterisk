@@ -1,0 +1,58 @@
+
+Please note that app_konference is still work in progress, so this document
+might be outdated. As always, the source code is the definitive reference
+(cli.[ch] and conference.[ch]).  You can also obtain help/usage information by
+using Asterisk CLI help system ("help konference")
+
+Current command line used by app_konference:
+
+- konference end: stops a conference
+  usage: konference end <conference name> [nohangup]
+
+- konference kickchannel: kick channel from a conference
+  usage: konference kickchannel <channel>
+
+- konference list: list members of a conference. If no conference is specified, all conferences are listed
+  usage: konference list <conference_name>
+
+- konference muteconference: mute all members in a conference
+  usage: konference muteconference <conference_name>
+
+- konference mutechannel: mute channel in a conference
+  usage: konference mutechannel <channel>
+
+- konference talkvolume: raise or lower the talker's volume
+  usage: konference talkvolume <channel> (up|down)
+
+- konference listenvolume: raise or lower the listener's volume
+  usage: konference listenervolume <channel> (up|down)
+
+- konference volume: raise or lower the conference volume
+  usage: konference volume <conference name> (up|down)
+
+- konference play sound: play a sound to a conference member
+  usage: konference play sound <channel> (<sound-file>)+ [mute|tone|evnt]
+  If "mute" is specified, all other audio is muted while the sound is played back.
+  If "tone" is specified, all other audio is discarded while the sound is played back. 
+  If "evnt" is specified, an event is generated after the the last sound is played back.
+
+- konference stop sound: stop playing sounds to a conference member
+  usage: konference stop sound <channel>
+
+- konference start moh: start music on hold for a conference member
+  usage: konference start moh <channel>
+
+- konference stop moh: stop music on hold for a conference member
+  usage: konference start moh <channel>
+
+- konference version: display konference version
+  usage: konference version
+  
+- konference restart: kick all users in all conferences
+  usage: konference restart
+
+- konference unmuteconference: unmute members in a conference
+  usage: konference unmuteconference <conference_name>
+
+- konference unmutechannel: unmute channel in a conference
+  usage: konference unmutechannel <channel>

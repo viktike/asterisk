@@ -1,0 +1,111 @@
+Introduction
+
+App_konference is a channel-independent conference application.
+
+Design goals
+
+Appkonference has several design goals which are different than Meetme:
+
+    * It does not require a zap channel for timing.
+    * It is very efficient when used with channels which support DTX (silence
+	detection/discontinuous transmission).
+    * It can do VAD on channels which do not support DTX (although this 
+	is more expensive than just mixing them, but less expensive then
+	encoding; therefore it might still be a win). 
+    * It presents messages on the Monitor interface for determine which 
+	speakers are active. 
+
+Mixing design
+
+    * Minimize encoding/decoding, minimize mixing.
+    * Minimize generational loss from trancoding.
+    * Usual cases are handled very efficiently:
+          o One speaker: That speaker's frame is sent directly to each 
+		participant which uses the same codec. It is trancoded 
+		_once_ for each additional codec type used by participants.
+          o Two speakers: Each speaker gets the other speaker's frames.  
+		The two speaker's frames are decoded and mixed, and then 
+		encoded _once_ for each codec type used by participants. 
+
+License
+
+Naturally, app_konference is GPL. The SVN repository also includes parts of 
+libspeex, which is distributed under a BSD-style license. See LICENSE for more
+details.
+
+
+Getting app_konference
+
+app_konference is available via SVN from its own home on sourceforge:
+
+    * http://sourceforge.net/projects/appkonference
+
+
+Compiling app_konference
+
+    * download asterisk source
+    * modify Makefile to point to your source directory
+    * make
+    * sudo make install 
+
+
+Using app_konference
+
+There is no configuration file. Conferences are created on-the-fly.
+
+Dialplan syntax:
+
+Konference(NAME,FLAGS,[MAXUSERS],[TYPE],[SPY],[VIDEO],[VADSTART],[VADCONTINUE])
+
+* NAME: whatever you want to identify the conference
+* FLAGS: dialplan flags, see Dialplan.txt for a comprehensive list
+
+* MAXUSERS: limit conference participants to max_users
+* TYPE: conference type identifier
+* SPY: channel name to spy
+* VIDEO: video mode
+
+
+CLI Commands
+
+Please look at CLI.txt for a comprehensive list of CLI commands and parameters.
+
+
+Manager Events
+
+app_konference generates several detailed manager events so that applications
+interfacing with the manager API can monitor conferences:
+
+	* ConferenceJoin: join conference
+	* ConferenceLeave: leave conference
+
+	* ConferenceDTMF: dtmf received
+	* ConferenceState: speaking state changed
+
+	* ConferenceMemberMute: mute member
+	* ConferenceMute: mute conference
+	* ConferenceMemberUnmute: unmute member
+	* ConferenceUnmute: unmute conference
+	* ConferenceSoundComplete: play sound complete
+
+Text Messages
+
+	* joinSFU: conference join notification
+	* getWebSocketChannel: return websocket channel name 
+	* getSourceChannel: return source channel name
+
+Benchmarking
+
+It would be nice to have solid benchmarks to present, but a good size 
+machine should be able to handle many callers when either (a) they are 
+using DTX, or (b) they are listen-only.  It's used often with hundreds of
+simultaneous callers.
+
+
+Discussion
+
+The appkonference-devel mailing list is the place to discuss everything related
+to app_konference.  The bug tracker on SourceForge gets a little bit of 
+attention now and then.
+
+
