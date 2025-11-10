@@ -26,7 +26,26 @@
 #include "dc_config.h"				/* pvt_config_t */
 #include "at_command.h"
 
-#define MODULE_DESCRIPTION	"Huawei 3G Quectel Channel Driver"
+#include <alsa/asoundlib.h>
+#define PERIOD_FRAMES           80
+#define DESIRED_RATE 8000
+#define ALSA_PCM_NEW_HW_PARAMS_API
+#define ALSA_PCM_NEW_SW_PARAMS_API
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+static snd_pcm_format_t format = SND_PCM_FORMAT_S16_LE;
+#else
+static snd_pcm_format_t format = SND_PCM_FORMAT_S16_BE;
+#endif
+static int silencesuppression = 0;
+static int silencethreshold = 1000;
+#define MAX_BUFFER_SIZE 100
+
+static int writedev = -1;
+
+#define MODULE_DESCRIPTION	"Channel Driver for Mobile Telephony"
 #define MAXQUECTELDEVICES	128
 
 INLINE_DECL const char * dev_state2str(dev_state_t state)
@@ -57,6 +76,7 @@ typedef struct pvt_state
 {
 	char			audio_tty[DEVPATHLEN];		/*!< tty for audio connection */
 	char			data_tty[DEVPATHLEN];		/*!< tty for AT commands */
+
 	uint32_t		at_tasks;			/*!< number of active tasks in at_queue */
 	uint32_t		at_cmds;			/*!< number of active commands in at_queue */
 	uint32_t		chansno;			/*!< number of channels in channels list */
@@ -120,6 +140,7 @@ typedef struct pvt
 
 	pthread_t		monitor_thread;			/*!< monitor (at commands reader) thread handle */
 
+        snd_pcm_t               *icard, *ocard;
 	int			audio_fd;			/*!< audio descriptor */
 	int			data_fd;			/*!< data descriptor */
 	char			* alock;			/*!< name of lockfile for audio */
@@ -183,6 +204,9 @@ typedef struct pvt
 
 	unsigned int		has_sms:1;			/*!< device has SMS support */
 	unsigned int		has_voice:1;			/*!< device has voice call support */
+	unsigned int		is_simcom:1;			/*!< device is a simcom module */
+        long                    t0;
+	unsigned int		call_estb:1;
 	unsigned int		has_call_waiting:1;		/*!< call waiting enabled on device */
 
 	unsigned int		group_last_used:1;		/*!< mark the last used device */
@@ -249,7 +273,7 @@ EXPORT_DECL void pvt_reload(restate_time_t when);
 EXPORT_DECL int pvt_enabled(const struct pvt * pvt);
 EXPORT_DECL void pvt_try_restate(struct pvt * pvt);
 
-EXPORT_DECL int opentty (const char* dev, char ** lockfile);
+EXPORT_DECL int opentty (const char* dev, char ** lockfile, int typ);
 EXPORT_DECL void closetty(int fd, char ** lockfname);
 EXPORT_DECL int lock_try(const char * devname, char ** lockname);
 EXPORT_DECL struct pvt * find_device_ex(struct public_state * state, const char * name);
