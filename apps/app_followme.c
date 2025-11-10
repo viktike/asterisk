@@ -289,8 +289,6 @@ static char statusprompt[PATH_MAX] = "followme/status";
 static char sorryprompt[PATH_MAX] = "followme/sorry";
 static char connprompt[PATH_MAX] = "";
 
-int fmnomsg = 0;
-
 static AST_RWLIST_HEAD_STATIC(followmes, call_followme);
 AST_LIST_HEAD_NOLOCK(findme_user_listptr, findme_user);
 
@@ -650,7 +648,7 @@ static void destroy_calling_tree(struct findme_user_listptr *findme_user_list)
 	}
 }
 
-static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_user_list, struct number *nm, struct ast_channel *caller, struct fm_args *tpargs)
+static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_user_list, struct number *nm, struct ast_channel *caller, struct fm_args *tpargs, int fmnomsg)
 {
 	struct ast_party_connected_line connected;
 	struct ast_channel *watchers[256];
@@ -1053,7 +1051,7 @@ static struct ast_channel *wait_for_winner(struct findme_user_listptr *findme_us
  * \retval winner Winning outgoing call.
  * \retval NULL if could not find someone to take the call.
  */
-static struct ast_channel *findmeexec(struct fm_args *tpargs, struct ast_channel *caller)
+static struct ast_channel *findmeexec(struct fm_args *tpargs, struct ast_channel *caller, int fmnomsg)
 {
 	struct number *nm;
 	struct ast_channel *winner = NULL;
@@ -1228,7 +1226,7 @@ static struct ast_channel *findmeexec(struct fm_args *tpargs, struct ast_channel
 		/* Add new outgoing channels to the findme list. */
 		AST_LIST_APPEND_LIST(&findme_user_list, &new_user_list, entry);
 
-		winner = wait_for_winner(&findme_user_list, nm, caller, tpargs);
+		winner = wait_for_winner(&findme_user_list, nm, caller, tpargs, fmnomsg);
 		if (!winner) {
 			/* Remove all dead outgoing nodes. */
 			AST_LIST_TRAVERSE_SAFE_BEGIN(&findme_user_list, tmpuser, entry) {
@@ -1374,6 +1372,7 @@ static int app_exec(struct ast_channel *chan, const char *data)
 	struct call_followme *f;
 	struct number *nm, *newnm;
 	int res = 0;
+	int fmnomsg = 0;
 	char *argstr;
 	struct ast_channel *caller;
 	struct ast_channel *outbound;
@@ -1528,7 +1527,7 @@ static int app_exec(struct ast_channel *chan, const char *data)
 	ast_connected_line_copy_from_caller(&targs->connected_in, ast_channel_caller(chan));
 	ast_channel_unlock(chan);
 
-	outbound = findmeexec(targs, chan);
+	outbound = findmeexec(targs, chan, fmnomsg);
 	if (!outbound) {
 		if (ast_test_flag(&targs->followmeflags, FOLLOWMEFLAG_NOANSWER)) {
 			if (ast_channel_state(chan) != AST_STATE_UP) {
