@@ -3,7 +3,7 @@
         <conflict>codec_bcg729</conflict>
         <conflict>codec_ipp_g729</conflict>
 	<conflict>codec_ipp_g729</conflict>
-	<defaultenable>no</defaultenable>
+	<defaultenabled>no</defaultenabled>
         <support_level>extended</support_level>
  ***/
 
