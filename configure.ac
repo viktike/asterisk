@@ -559,6 +559,7 @@ AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [op
 AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
 AST_EXT_LIB_SETUP([BFD], [Debug symbol decoding], [bfd])
 AST_EXT_LIB_SETUP([ZMQ], [Zero Message Queue], [zmq])
+AST_EXT_LIB_SETUP([CONSUL], [Hashicorp Consul broker service discovery], [consul])
 AST_EXT_LIB_SETUP([BCG729], [BelledonneCommunications G.729 (Linphone)], [bcg729])
 
 # BKTR is used for backtrace support on platforms that do not
@@ -2682,6 +2683,8 @@ AST_EXT_LIB_CHECK([AMR_WB_DECODER], [opencore-amrwb], [D_IF_init], [opencore-amr
 AST_EXT_LIB_CHECK([AMR_WB_ENCODER], [vo-amrwbenc], [E_IF_init], [vo-amrwbenc/enc_if.h])
 
 AST_EXT_LIB_CHECK([ZMQ], [zmq], [zmq_version], [zmq.h])
+
+AST_EXT_LIB_CHECK([CONSUL], [consul], [consul_service_register], [consul/consul.h])
 
 AST_EXT_LIB_CHECK([IPP], [ippsc], [ippscGetLibVersion], [ippsc.h])
 

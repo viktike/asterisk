@@ -1264,6 +1264,10 @@ PBX_BCG729
 BCG729_DIR
 BCG729_INCLUDE
 BCG729_LIB
+PBX_CONSUL
+CONSUL_DIR
+CONSUL_INCLUDE
+CONSUL_LIB
 PBX_ZMQ
 ZMQ_DIR
 ZMQ_INCLUDE
@@ -1528,6 +1532,7 @@ with_opencore_amrwb
 with_vo_amrwbenc
 with_bfd
 with_zmq
+with_consul
 with_bcg729
 with_execinfo
 with_bluetooth
@@ -2335,6 +2340,8 @@ Optional Packages:
                           PATH
   --with-bfd=PATH         use Debug symbol decoding files in PATH
   --with-zmq=PATH         use Zero Message Queue files in PATH
+  --with-consul=PATH      use Hashicorp Consul broker service discovery files
+                          in PATH
   --with-bcg729=PATH      use BelledonneCommunications G.729 (Linphone) files
                           in PATH
   --with-execinfo=PATH    use Stack Backtrace files in PATH
@@ -22222,6 +22229,39 @@ then :
 	*)
 	ZMQ_DIR="${withval}"
 	ac_mandatory_list="${ac_mandatory_list} ZMQ"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    CONSUL_DESCRIP="Hashicorp Consul broker service discovery"
+    CONSUL_OPTION="consul"
+    PBX_CONSUL=0
+
+# Check whether --with-consul was given.
+if test ${with_consul+y}
+then :
+  withval=$with_consul;
+	case ${withval} in
+	n|no)
+	USE_CONSUL=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_CONSUL=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} CONSUL"
+	;;
+	*)
+	CONSUL_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} CONSUL"
 	;;
 	esac
 
@@ -44738,6 +44778,103 @@ fi
          PBX_ZMQ=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_ZMQ 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_CONSUL}" != "x1" -a "${USE_CONSUL}" != "no"; then
+   pbxlibdir=""
+   # if --with-CONSUL=DIR has been specified, use it.
+   if test "x${CONSUL_DIR}" != "x"; then
+      if test -d ${CONSUL_DIR}/lib; then
+         pbxlibdir="-L${CONSUL_DIR}/lib"
+      else
+         pbxlibdir="-L${CONSUL_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for consul_service_register in -lconsul" >&5
+printf %s "checking for consul_service_register in -lconsul... " >&6; }
+if test ${ac_cv_lib_consul_consul_service_register+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lconsul ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char consul_service_register ();
+int
+main (void)
+{
+return consul_service_register ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_consul_consul_service_register=yes
+else $as_nop
+  ac_cv_lib_consul_consul_service_register=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_consul_consul_service_register" >&5
+printf "%s\n" "$ac_cv_lib_consul_consul_service_register" >&6; }
+if test "x$ac_cv_lib_consul_consul_service_register" = xyes
+then :
+  AST_CONSUL_FOUND=yes
+else $as_nop
+  AST_CONSUL_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_CONSUL_FOUND}" = "yes"; then
+      CONSUL_LIB="${pbxlibdir} -lconsul "
+      # if --with-CONSUL=DIR has been specified, use it.
+      if test "x${CONSUL_DIR}" != "x"; then
+         CONSUL_INCLUDE="-I${CONSUL_DIR}/include"
+      fi
+      CONSUL_INCLUDE="${CONSUL_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${CONSUL_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "consul/consul.h" "ac_cv_header_consul_consul_h" "$ac_includes_default"
+if test "x$ac_cv_header_consul_consul_h" = xyes
+then :
+  CONSUL_HEADER_FOUND=1
+else $as_nop
+  CONSUL_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${CONSUL_HEADER_FOUND}" = "x0" ; then
+         CONSUL_LIB=""
+         CONSUL_INCLUDE=""
+      else
+
+         PBX_CONSUL=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_CONSUL 1
 _ACEOF
 
       fi

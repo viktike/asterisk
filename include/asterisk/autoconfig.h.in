@@ -183,6 +183,10 @@
 /* Define to 1 if you have the Codec 2 Audio Decoder/Encoder library. */
 #undef HAVE_CODEC2
 
+/* Define to 1 if you have the Hashicorp Consul broker service discovery
+   library. */
+#undef HAVE_CONSUL
+
 /* Define to 1 if you have the Corosync library. */
 #undef HAVE_COROSYNC
 
