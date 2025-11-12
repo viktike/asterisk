@@ -257,6 +257,10 @@ int parse_uri_full(char *uri, const char *scheme, char **user, char **pass,
 }
 
 #ifdef TEST_FRAMEWORK
+#if __GNUC__ >= 12
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer="
+#endif
 AST_TEST_DEFINE(sip_parse_uri_full_test)
 {
 	int res = AST_TEST_PASS;
@@ -279,7 +283,7 @@ AST_TEST_DEFINE(sip_parse_uri_full_test)
 
 	struct testdata *testdataptr;
 
-	AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
+	static AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
 
 	struct testdata td1 = {
 		.desc = "no headers",
@@ -1326,7 +1330,7 @@ AST_TEST_DEFINE(parse_name_andor_addr_test)
 
 	struct testdata *testdataptr;
 
-	AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
+	static AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
 
 	struct testdata td1 = {
 		.desc = "quotes and brackets",
@@ -1552,7 +1556,7 @@ AST_TEST_DEFINE(parse_contact_header_test)
 	struct contact *tdcontactptr;
 	struct contact *contactptr;
 
-	AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
+	static AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
 	struct contactliststruct contactlist1, contactlist2;
 
 	struct testdata td1 = {
@@ -1775,7 +1779,7 @@ AST_TEST_DEFINE(sip_parse_options_test)
 	};
 
 	struct testdata *testdataptr;
-	AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
+	static AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
 
 	struct testdata test1 = {
 		.name = "test_all_unsupported",
@@ -2475,7 +2479,7 @@ AST_TEST_DEFINE(parse_via_test)
 		AST_LIST_ENTRY(testdata) list;
 	};
 	struct testdata *testdataptr;
-	AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
+	static AST_LIST_HEAD_NOLOCK(testdataliststruct, testdata) testdatalist;
 	struct testdata t1 = {
 		.in = "SIP/2.0/UDP host:port;branch=thebranch",
 		.expected_protocol = "SIP/2.0/UDP",
@@ -2635,6 +2639,9 @@ AST_TEST_DEFINE(parse_via_test)
 	}
 	return res;
 }
+#if __GNUC__ >= 13
+#pragma GCC diagnostic pop /* -Wdangling-pointer= */
+#endif
 #endif
 
 void sip_request_parser_register_tests(void)
