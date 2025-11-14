@@ -1,0 +1,22 @@
+[cel]
+url = http://127.0.0.1/cel/
+date_format = %Y-%m-%d %H:%M:%S
+verify_host = yes
+verify_peer = yes
+timeout = 2
+connect_timeout = 1
+
+[cdr]
+url = http://127.0.0.1/cdr/
+date_format = %Y-%m-%d %H:%M:%S
+verify_host = yes
+verify_peer = yes
+timeout = 2
+connect_timeout = 1
+
+[queue]
+url = http://127.0.0.1/queue/
+verify_host = yes
+verify_peer = yes
+timeout = 2
+connect_timeout = 1
