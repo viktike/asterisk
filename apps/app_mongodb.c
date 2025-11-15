@@ -219,8 +219,7 @@ static int push_exec(struct ast_channel *chan, const char *data)
       if (args.argc == 5) {
          ast_app_parse_options(app_opts, &flags, opts, args.options);
 
-         if (ast_test_flag(&flags, OPTION_SERVER_ID) && !ast_strlen_zero(opts[OPTION_SERVER_ID])) {
-            serverid = ast_strdupa(opts[OPTION_ARG_SERVER_ID]);
+         if (ast_test_flag(&flags, OPTION_SERVER_ID) && !ast_strlen_zero(opts[OPTION_ARG_SERVER_ID])) {
             if(!bson_oid_is_valid(serverid, strlen(serverid))){
                ast_log(LOG_ERROR, "invalid server id specified in s(%s) option (5th parameter of %s)", serverid, app);
                return -1;
@@ -250,6 +249,7 @@ static int push_exec(struct ast_channel *chan, const char *data)
          mongo_uri = mongoc_uri_new(uri);
          if (mongo_uri == NULL) {
             ast_log(LOG_ERROR, "parsing uri error: %s\n", uri);
+            if(mongo_server_id){ ast_free(mongo_server_id); mongo_server_id = NULL; }
             return -1;
          }
          mongo_connection = mongoc_client_pool_new(mongo_uri);
@@ -258,6 +258,7 @@ static int push_exec(struct ast_channel *chan, const char *data)
          }
          if(mongo_connection == NULL){
             ast_log(LOG_ERROR, "cannot make a connection pool for MongoDB\n");
+            if(mongo_server_id){ ast_free(mongo_server_id); mongo_server_id = NULL; }
             return -1;
          }
          if(apm_enabled){
@@ -315,6 +316,10 @@ static int push_exec(struct ast_channel *chan, const char *data)
       }
       if(mongo_connection){
          mongoc_client_pool_destroy(mongo_connection);
+      }
+      if(mongo_server_id){
+         ast_free(mongo_server_id);
+         mongo_server_id = NULL;
       }
 
       return res;
