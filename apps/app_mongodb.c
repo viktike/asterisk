@@ -1,7 +1,7 @@
  /*
  * app_mongodb.c
  *
- * Author: Sokratis Galiatsis [sokratisg] <sokratis@techio.com>
+ * Author: Sperl Viktor <viktike32@gmail.com>
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License v2 as published
@@ -18,15 +18,13 @@
 
 /*! \file
  *
- * \brief Mongodb based CallerID retriever
+ * \brief Mongodb Publisher Application
  *
- * \author Sokratis Galiatsis [sokratisg] <sokratis@techio.com>
- *
- * \arg none, callerid is retrieved automatically from channel
- * \ingroup addons
+ * \author Sperl Viktor <viktike32@gmail.com>
  */
 
 /*** MODULEINFO
+ 	<depend>res_mongodb</depend>
     <depend>mongoc</depend>
     <depend>bson</depend>
     <support_level>extended</support_level>
@@ -35,268 +33,318 @@
 
 #include "asterisk.h"
 
-#include <sys/types.h>
-#include "asterisk/config.h"
-#include "asterisk/strings.h"
-#include "asterisk/lock.h"
-#include "asterisk/file.h"
-#include "asterisk/channel.h"
-#include "asterisk/pbx.h"
 #include "asterisk/module.h"
-#include "asterisk/translate.h"
-#include "asterisk/image.h"
-#include "asterisk/callerid.h"
+#include "asterisk/channel.h"
+#include "asterisk/res_mongodb.h"
+#include "asterisk/config.h"
+#include "asterisk/app.h"
+#include "asterisk/pbx.h"
 
-#include <stdio.h>
-#include <string.h>
+/*** DOCUMENTATION
+	<application name="MongoPush" language="en_US">
+		<synopsis>
+			Push a BSON document to a collection in a MongoDB database
+		</synopsis>
+		<syntax>
+			<parameter name="connection" required="true"/>
+			<parameter name="dbname" required="false"/>
+			<parameter name="collection" required="false"/>
+			<parameter name="document" required="true"/>
+         <parameter name="options" required="false">
+				<optionlist>
+					<option name="s">
+						<argument name="ServerID" required="true" />
+						<para>MongoDB ServerID</para>
+					</option>
+					<option name="a">
+						<argument name="APM" required="true" />
+						<para>If MongoDB APM should be started [0|1]</para>
+					</option>
+				</optionlist>
+         </parameter>
+		</syntax>
+		<description>
+			<para>Pushes a JSON document to a collection in a Mongo database coverted to BSON (binary JSON)</para>
+		</description>
+	</application>
+ ***/
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
+static char *app = "MongoPush";
+#define CONFIG_FILE "ast_mongo.conf"
+#define URI "uri"
+#define DATABSE "database"
+#define COLLECTION "collection"
+#define SERVERID "serverid"
 
-#include <libbson-1.0/bson.h>
-#include <libmongoc-1.0/mongoc.h>
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <errno.h>
-
-static char *desc = "MongoDB Interface";
-static char *app = "app_mongodb";
-static char *config = "app_mongodb.conf";
-
-static struct ast_str *hostname = NULL, *dbname = NULL, *dbcollection = NULL, *dbnamespace = NULL, *dbuser = NULL, *password = NULL;
-
-static int dbport = 0;
-static int connected = 0;
-
-AST_MUTEX_DEFINE_STATIC(mongodb_lock);
-
-struct unload_string {
-  AST_LIST_ENTRY(unload_string) entry;
-  struct ast_str *str;
+enum option_flags {
+	OPTION_SERVER_ID  = (1 << 0),
+	OPTION_APM        = (1 << 1),
 };
 
-static AST_LIST_HEAD_STATIC(unload_strings, unload_string);
+enum option_args {
+	OPTION_ARG_SERVER_ID,
+	OPTION_ARG_APM,
+	/* This *must* be the last value in this enum! */
+	OPTION_ARG_ARRAY_SIZE,
+};
 
-static int _unload_module(int reload)
+AST_APP_OPTIONS(app_opts, {
+	AST_APP_OPTION_ARG('s', OPTION_SERVER_ID, OPTION_ARG_SERVER_ID),
+	AST_APP_OPTION_ARG('a', OPTION_APM, OPTION_ARG_APM),
+});
+
+static struct ast_config * load_config_file(const char * config_file)
 {
-  return ast_unregister_application(app);
-  return 0;
-}
+   struct ast_config *cfg;
+   struct ast_flags config_flags = { .flags = 0 };
 
-static int mongodb_callerid(struct ast_channel *chan, char *data)
-{	
-	const char * ns;
-	mongo conn[1];
-  char mongo_conn[255];
+	cfg = ast_config_load(config_file, config_flags);
 
-  int *caller_num;
-  const char *cid;
-
-	static int deprecated = 0;
-
-	ast_debug(1, "mongodb: Starting mongodb_callerid.\n");
-
-	mongo_init( &conn );
-	if (mongo_client( &conn , ast_str_buffer(hostname), dbport ) != MONGO_OK){
-		mongo_destroy( &conn );
-		ast_log(LOG_ERROR, "Method: mongodb_log, MongoDB failed to connect.\n");
-		connected = 0;
-		return -1;
-	}
-
-	if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(&conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
-		mongo_destroy( &conn );
-		ast_log(LOG_ERROR, "Method: mongodb_log, MongoDB failed to authenticate to do %s with username %s!\n", ast_str_buffer(dbname), ast_str_buffer(dbuser));
-		connected = 0;
-		return -1;
-	}
-
-	ast_debug(1, "mongodb: Locking mongodb_lock.\n");
-	ast_mutex_lock(&mongodb_lock);
-
-	ast_debug(1, "mongodb: Got connection.\n");
-
-	ast_debug(1, "mongodb: Init BSON query.\n");
-	bson query[1];
-	mongo_cursor cursor[1];
-
-  int callerr = atoi(chan->caller.id.number.str);
-	bson_init( query );
-	bson_append_int( query, "num", callerr );
-	bson_finish( query );
-
- // TODO: handle error conditions
-  strcpy(mongo_conn, ast_str_buffer(dbname));
-  strcat(mongo_conn, ".");
-  strcat(mongo_conn, ast_str_buffer(dbcollection));
-
-	mongo_cursor_init( cursor, conn, mongo_conn );
-	mongo_cursor_set_query( cursor, query );
-
-	bson_iterator iterator[1];
-	while( mongo_cursor_next( cursor ) == MONGO_OK ) {
-		if ( bson_find( iterator, mongo_cursor_bson( cursor ), "cid" )) {
-    		ast_debug(1, "cid: %s\n", bson_iterator_string( iterator ) );
-    		ast_log(LOG_ERROR,"cid: %s\n", bson_iterator_string( iterator ) );
-        cid = bson_iterator_string( iterator );
-		}
-	}
-	bson_destroy( query );
-	mongo_cursor_destroy( cursor );
-
-	connected = 1;
-
-	ast_debug(1, "Unlocking mongodb_lock.\n");
-	ast_mutex_unlock(&mongodb_lock);
-
-	/* Set the combined caller id. */
-  chan->caller.id.name.valid = 1;
-  ast_free(chan->caller.id.name.str);
-  chan->caller.id.name.str = ast_strdup(cid);
-/*
-  chan->caller.id.number.valid = 1;
-  ast_free(chan->caller.id.number.str);
-  chan->caller.id.number.str = ast_strdup(cid_num);
-*/
-	return 0;
-}
-
-static int load_config_string(struct ast_config *cfg, const char *category, const char *variable, struct ast_str **field, const char *def)
-{
-	struct unload_string *us;
-	const char *tmp;
-
-	if (!(us = ast_calloc(1, sizeof(*us)))) {
-		return -1;
-	}
-
-	if (!(*field = ast_str_create(16))) {
-		ast_free(us);
-		return -1;
-	}
-
-	tmp = ast_variable_retrieve(cfg, category, variable);
-
-	ast_str_set(field, 0, "%s", tmp ? tmp : def);
-
-	us->str = *field;
-
-/*
-	AST_LIST_LOCK(&unload_string);
-	AST_LIST_INSERT_HEAD(&unload_string, us, entry);
-	AST_LIST_UNLOCK(&unload_string);
-*/
-
-	return 0;
-}
-
-static int load_config_number(struct ast_config *cfg, const char *category, const char *variable, int *field, int def)
-{
-  const char *tmp;
-
-  tmp = ast_variable_retrieve(cfg, category, variable);
-
-  if (!tmp || sscanf(tmp, "%d", field) < 1) {
-    *field = def;
-  }
-
-  return 0;
-}
-
-static int _load_module(int reload)
-{
-    int res;
-	struct ast_config *cfg;
-	struct ast_variable *var;
-	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
-
-	mongo conn[1];
-	bson b[1];
-
-	ast_debug(1, "Starting mongodb_callerid module load.\n");
-	ast_debug(1, "Loading mongodb_callerid Config.\n");
-
-	if (!(cfg = ast_config_load(config, config_flags)) || cfg == CONFIG_STATUS_FILEINVALID) {
-		ast_log(LOG_WARNING, "Unable to load config for mongodb CallerID Backend: %s\n", config);
-		return AST_MODULE_LOAD_SUCCESS;
-	} else if (cfg == CONFIG_STATUS_FILEUNCHANGED) {
-		return AST_MODULE_LOAD_SUCCESS;
-	}
-
-
-	if (reload) {
-		_unload_module(1);
-	}
-
-	ast_debug(1, "Browsing mongodb Global.\n");
-	var = ast_variable_browse(cfg, "global");
-	if (!var) {
-		return AST_MODULE_LOAD_SUCCESS;
-	}
-
-	res = 0;
-
-	res |= load_config_string(cfg, "global", "hostname", &hostname, "localhost");
-	res |= load_config_string(cfg, "global", "dbname", &dbname, "asterisk");
-	res |= load_config_string(cfg, "global", "collection", &dbcollection, "callerid");
-	res |= load_config_number(cfg, "global", "port", &dbport, 27017);
-	res |= load_config_string(cfg, "global", "username", &dbuser, "");
-	res |= load_config_string(cfg, "global", "password", &password, "");
-
-	if (res < 0) {
-		return AST_MODULE_LOAD_FAILURE;
-	}
-
-	ast_debug(1, "Got hostname of %s\n", ast_str_buffer(hostname));
-	ast_debug(1, "Got port of %d\n", dbport);
-	ast_debug(1, "Got dbname of %s\n", ast_str_buffer(dbname));
-	ast_debug(1, "Got dbcollection of %s\n", ast_str_buffer(dbcollection));
-	ast_debug(1, "Got user of %s\n", ast_str_buffer(dbuser));
-	ast_debug(1, "Got password of %s\n", ast_str_buffer(password));
-	
-	
-	dbnamespace = ast_str_create(255);
-	ast_str_set(&dbnamespace, 0, "%s.%s", ast_str_buffer(dbname), ast_str_buffer(dbcollection));
-
-	if (mongo_client(&conn , ast_str_buffer(hostname), dbport) != MONGO_OK) {
-		ast_log(LOG_ERROR, "Method: _load_module, MongoDB failed to connect to %s:%d!\n", ast_str_buffer(hostname), dbport);
-		res = -1;
+	if (!cfg) {
+        ast_log(LOG_ERROR, "Error reading config file: %s\n", config_file);
+        return NULL;
+    } else if (cfg == CONFIG_STATUS_FILEMISSING) {
+		ast_log(LOG_WARNING, "Missing configuration file %s\n", config_file);
+		return NULL;
+	} else if (cfg == CONFIG_STATUS_FILEINVALID) {
+		ast_log(LOG_ERROR, "Unable to load configuration file %s\n", config_file);
+		return NULL;
 	} else {
-		if (ast_str_strlen(dbuser) != 0 && (mongo_cmd_authenticate(&conn, ast_str_buffer(dbname), ast_str_buffer(dbuser), ast_str_buffer(password)) != MONGO_OK)) {
-			ast_log(LOG_ERROR, "Method: _load_module, MongoDB failed to authenticate to do %s with username %s!\n", ast_str_buffer(dbname), ast_str_buffer(dbuser));
-			res = -1;
-		} else {
-			connected = 1;
-		}
-		
-		mongo_destroy(&conn);
+		return cfg;
 	}
+}
 
-	ast_config_destroy(cfg);
+static int push_exec(struct ast_channel *chan, const char *data)
+{
+   static void* apm_context = NULL;
+   static int apm_enabled;
+   int res = 0;
 
-	res = ast_register_application(app, mongodb_callerid, NULL, NULL);
-	if (res) {
-		ast_log(LOG_ERROR, "Unable to register MongoDB CallerID Backend\n");
+   bson_oid_t *mongo_server_id = NULL;
+   bson_t *doc = NULL;
+   bson_error_t parse_error, insert_error;
+   mongoc_collection_t *mongo_collection = NULL;
+   mongoc_uri_t *mongo_uri = NULL;
+   mongoc_client_t *mongo_client = NULL;
+   mongoc_client_pool_t *mongo_connection = NULL;
+
+   const char *uri, *database = NULL, *collection = NULL, *serverid = NULL, *apm = NULL;
+
+   char *parse, *opts[OPTION_ARG_ARRAY_SIZE];
+	struct ast_flags flags;
+   struct ast_config *cfg;
+   struct ast_variable *var; 
+
+	AST_DECLARE_APP_ARGS(args,
+		AST_APP_ARG(connection);
+		AST_APP_ARG(database);
+		AST_APP_ARG(collection);
+		AST_APP_ARG(document);
+      AST_APP_ARG(options);
+	);
+
+	parse = ast_strdupa(data);
+	AST_STANDARD_APP_ARGS(args, parse);
+
+	if (ast_strlen_zero(args.connection)) {
+		ast_log(LOG_ERROR, "%s requires an MongoDB connection from res_mongodb or an URI\n", app);
+		return -1;
+	} else {
+      cfg = load_config_file(CONFIG_FILE);
+      if(cfg){
+         var = ast_variable_browse(cfg, args.connection);
+      }
+      if(cfg && var){
+         /* Mongo config from file */
+         if((uri = ast_variable_retrieve(cfg, args.connection, URI)) == NULL){
+            ast_log(LOG_ERROR, "no uri specified in category %s of config file %s\n", args.connection, CONFIG_FILE);
+            return -1;
+         }
+         if((database = ast_variable_retrieve(cfg, args.connection, DATABSE)) == NULL){
+            ast_log(LOG_WARNING, "no database specified in category %s of config file %s\n", args.connection, CONFIG_FILE);
+         }
+         if((collection = ast_variable_retrieve(cfg, args.connection, COLLECTION)) == NULL) {
+            ast_log(LOG_WARNING, "no collection specified in category %s of config file %s\n", args.connection, CONFIG_FILE);
+         }
+         if((serverid = ast_variable_retrieve(cfg, args.connection, SERVERID)) != NULL){
+            if(!bson_oid_is_valid(serverid, strlen(serverid))){
+               ast_log(LOG_ERROR, "invalid server id specified in category %s of config file %s\n", args.connection, CONFIG_FILE);
+               return -1;
+            }
+         }
+         if((apm = ast_variable_retrieve(cfg, args.connection, "apm")) && (sscanf(apm, "%u", &apm_enabled) != 1)){
+            ast_log(LOG_WARNING, "apm must be a 0|1, not '%s' in category %s of config file %s\n", apm, args.connection, CONFIG_FILE);
+            apm_enabled = 0;
+         }
+
+         ast_config_destroy(cfg);
+      } else {
+         /* Mongo config from params */
+         ast_log(LOG_NOTICE, "Unable to find category %s in configuration file %s, assuming it's an URI\n", args.connection, CONFIG_FILE);
+         uri = ast_strdupa(args.connection);
+
+         if(ast_strlen_zero(args.database)){
+            ast_log(LOG_NOTICE, "no database (2nd parameter) specified for %s.\n", app);
+         } else {
+            database = ast_strdupa(args.database);
+         }
+
+         if(ast_strlen_zero(args.collection)){
+            ast_log(LOG_NOTICE, "no collection (3rd parameter) specified for %s.\n", app);
+         } else {
+            collection = ast_strdupa(args.collection);
+         }
+
+         apm_enabled = 0;
+      }
+
+      /* Mongo commong config params */
+      if(ast_strlen_zero(database) && !ast_strlen_zero(args.database)){
+         database = ast_strdupa(args.database);
+      }
+      if(ast_strlen_zero(database)){
+         ast_log(LOG_ERROR, "still no database selected for %s.\n", app);
+         return -1;
+      }
+
+      if(ast_strlen_zero(collection) && !ast_strlen_zero(args.collection)){
+         collection = ast_strdupa(args.collection);
+      }
+      if(ast_strlen_zero(collection)){
+         ast_log(LOG_ERROR, "no database selected for %s.\n", app);
+         return -1;
+      }
+
+      // Options field parsing
+      if (args.argc == 5) {
+         ast_app_parse_options(app_opts, &flags, opts, args.options);
+
+         if (ast_test_flag(&flags, OPTION_SERVER_ID) && !ast_strlen_zero(opts[OPTION_SERVER_ID])) {
+            serverid = ast_strdupa(opts[OPTION_ARG_SERVER_ID]);
+            if(!bson_oid_is_valid(serverid, strlen(serverid))){
+               ast_log(LOG_ERROR, "invalid server id specified in s(%s) option (5th parameter of %s)", serverid, app);
+               return -1;
+            }
+         }
+
+         if (ast_test_flag(&flags, OPTION_APM) && !ast_strlen_zero(opts[OPTION_ARG_APM])) {
+            apm_enabled = atoi(opts[OPTION_ARG_APM]);
+         }
+      }
+
+      /* Push document if provided */
+      if (ast_strlen_zero(args.document)) {
+         ast_log(LOG_ERROR, "%s requires a JSON document to push\n", app);
+         return -1;
+      } else {
+
+         /* Mongo connect */
+         if(serverid){
+            mongo_server_id = ast_malloc(sizeof(bson_oid_t));
+            if (mongo_server_id == NULL) {
+                  ast_log(LOG_ERROR, "not enough memory for server_id allocation\n");
+                  return -1;
+            }
+            bson_oid_init_from_string(mongo_server_id, serverid);
+         }
+         mongo_uri = mongoc_uri_new(uri);
+         if (mongo_uri == NULL) {
+            ast_log(LOG_ERROR, "parsing uri error: %s\n", uri);
+            return -1;
+         }
+         mongo_connection = mongoc_client_pool_new(mongo_uri);
+         if(mongo_uri){
+            mongoc_uri_destroy(mongo_uri);
+         }
+         if(mongo_connection == NULL){
+            ast_log(LOG_ERROR, "cannot make a connection pool for MongoDB\n");
+            return -1;
+         }
+         if(apm_enabled){
+            apm_context = ast_mongo_apm_start(mongo_connection);
+         }
+
+         mongo_client = mongoc_client_pool_pop(mongo_connection);
+         if(mongo_client == NULL) {
+            ast_log(LOG_ERROR, "unexpected error, no connection pool\n");
+            if(apm_context){
+               ast_mongo_apm_stop(apm_context);
+            }
+            if(mongo_connection){
+               mongoc_client_pool_destroy(mongo_connection);
+            }
+            return -1;
+         }
+         mongo_collection = mongoc_client_get_collection(mongo_client, database, collection);
+         if(mongo_collection == NULL) {
+            ast_log(LOG_ERROR, "cannot get such a collection, %s, %s\n", database, collection);
+            mongoc_client_pool_push(mongo_connection, mongo_client);
+            if(apm_context){
+               ast_mongo_apm_stop(apm_context);
+            }
+            if(mongo_connection){
+               mongoc_client_pool_destroy(mongo_connection);
+            }
+            return -1;
+         }
+
+         /* Document */
+         doc = bson_new_from_json((const uint8_t *)args.document, -1, &parse_error);
+         if(!doc){
+            ast_log(LOG_ERROR, "JSON to BSON conversion error: %s\n", parse_error.message);
+            res = -1;
+         } else {
+            if(serverid){
+               BSON_APPEND_OID(doc, SERVERID, mongo_server_id);
+            }
+            if(!mongoc_collection_insert(mongo_collection, MONGOC_INSERT_NONE, doc, NULL, &insert_error)){
+               ast_log(LOG_ERROR, "insertion failed: %s\n", insert_error.message);
+               res = -1;
+            }
+            bson_destroy(doc);
+         }
+      }
+
+      /* Mongo disconnect */
+      if(mongo_collection){
+         mongoc_collection_destroy(mongo_collection);
+      }
+      mongoc_client_pool_push(mongo_connection, mongo_client);
+      if(apm_context){
+         ast_mongo_apm_stop(apm_context);
+      }
+      if(mongo_connection){
+         mongoc_client_pool_destroy(mongo_connection);
+      }
+
+      return res;
 	}
-
-	return res;
 }
 
 static int load_module(void)
 {
-	return _load_module(0);
+	int res;
+	
+	res = ast_register_application_xml(app, push_exec);
+
+	return res ? AST_MODULE_LOAD_DECLINE : AST_MODULE_LOAD_SUCCESS;
 }
 
 static int unload_module(void)
 {
-	return _unload_module(0);
+	return ast_unregister_application(app);
 }
 
-static int reload(void)
+static int reload_module(void)
 {
-	return _load_module(1);
+	return 0;
 }
 
-AST_MODULE_INFO_STANDARD(ASTERISK_GPL_KEY, "Get CallerID from MongoDB Application");
+AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "MongoDB Push Dialplan Application",
+	.support_level = AST_MODULE_SUPPORT_CORE,
+	.load = load_module,
+	.unload = unload_module,
+	.reload = reload_module,
+	.requires = "res_mongodb",
+);
+

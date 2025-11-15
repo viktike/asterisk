@@ -1,9 +1,9 @@
 /*
  * Asterisk -- An open source telephony toolkit.
  *
- * Copyright (C) 2024, Arenim Technologies, Ltd.
+ * Copyright (C) 2025
  *
- * Sperl Viktor <sperl.viktor@arenim.com>
+ * Sperl Viktor <viktike32@gmail.com>
  *
  * See http://www.asterisk.org for more information about
  * the Asterisk project. Please do not directly contact
@@ -20,7 +20,7 @@
  *
  * \brief HTTP Queue Log Backend
  *
- * \author Sperl Viktor <sperl.viktor@arenim.com>
+ * \author Sperl Viktor <viktike32@gmail.com.com>
  */
 
 /*** MODULEINFO
@@ -52,7 +52,7 @@ long conf_connect_timeout = 5;
 static struct ast_config * load_config_file(const char * config_file)
 {
     struct ast_config *cfg;
-    struct ast_flags config_flags = {0};
+    struct ast_flags config_flags = { .flags = 0 };
 
 	cfg = ast_config_load(config_file, config_flags);
 

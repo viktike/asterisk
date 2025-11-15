@@ -36,10 +36,10 @@ long conf_verfy_peer = 1;
 long conf_timeout = 5;
 long conf_connect_timeout = 5;
 
-static struct ast_config * load_config_file(const char * config_file)
+static struct ast_config * load_config_file(const char * config_file, int reload)
 {
     struct ast_config *cfg;
-    struct ast_flags config_flags = {0};
+    struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
 
 	cfg = ast_config_load(config_file, config_flags);
 
@@ -57,14 +57,14 @@ static struct ast_config * load_config_file(const char * config_file)
 	}
 }
 
-static int load_config(const char *config_file, const char *config_category)
+static int load_config(const char *config_file, const char *config_category, int reload)
 {
-	struct ast_config *cfg = load_config_file(config_file);
+	struct ast_config *cfg = load_config_file(config_file, reload);
 	struct ast_variable *var;
 
 	if(!cfg){
 		return -1;
-	} else {
+	} else if(cfg != CONFIG_STATUS_FILEUNCHANGED){
 		var = ast_variable_browse(cfg, config_category);
 		if (!var) {
 			ast_log(LOG_ERROR, "No config category %s in file %s\n", config_category, config_file);
@@ -93,13 +93,15 @@ static int load_config(const char *config_file, const char *config_category)
 		ast_config_destroy(cfg);
 		ast_log(LOG_NOTICE, "Configuration category %s loaded from %s\n", config_category, config_file);
 		return 0;
+	} else {
+		return 0;
 	}
 }
 
 static int reload_config(void)
 {
 	ast_log(LOG_NOTICE, "Reloading " BACKEND_NAME " configuration\n");
-	return load_config(CONFIG_FILE, CONFIG_CATEGORY);	
+	return load_config(CONFIG_FILE, CONFIG_CATEGORY, 1);	
 }
 
 static int unload_module(void)
@@ -175,7 +177,7 @@ static void http_log(struct ast_event *event)
 static int load_module(void)
 {
 	conf_url = "http://127.0.0.1/" CONFIG_CATEGORY "/";
-	if (load_config(CONFIG_FILE, CONFIG_CATEGORY)) {
+	if (load_config(CONFIG_FILE, CONFIG_CATEGORY, 0)) {
 		return AST_MODULE_LOAD_FAILURE;
 	}
 
