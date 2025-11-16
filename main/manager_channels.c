@@ -704,6 +704,9 @@ static struct ast_manager_event_blob *channel_newexten(
 	struct ast_channel_snapshot *old_snapshot,
 	struct ast_channel_snapshot *new_snapshot)
 {
+	/* This event is useless, and is so frequent that it
+		can add a significant performance overhead. */
+	// return NULL;
 	/* Empty application is not valid for a Newexten event */
 	if (ast_strlen_zero(new_snapshot->dialplan->appl)) {
 		return NULL;
