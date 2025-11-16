@@ -96,8 +96,11 @@ static int kewl_exec(struct ast_channel *chan, const char *data)
 		ast_log(LOG_WARNING, "%s is not an FXS channel\n", ast_channel_name(chan));
 		return -1;
 	}
-
+#ifdef DAHDI_KEWL
+	x = DAHDI_KEWL;
+#else
 	x = DAHDI_SIG_FXOKS;	// Or for FXO: DAHDI_SIG_FXSKS
+#endif
 	res = ioctl(ast_channel_fd(chan, 0), DAHDI_HOOK, &x);
 
 	if (res && errno != EINPROGRESS) {
