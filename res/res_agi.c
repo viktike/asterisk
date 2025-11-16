@@ -541,6 +541,13 @@
 				arguments. If specified, this parameter must be preceded by
 				<literal>s=</literal>.</para>
 			</parameter>
+			<parameter name="n=noise">
+				<para>The number of milliseconds of noise that are required before the
+				silence detection is enabled, regardless of the
+				<replaceable>escape_digits</replaceable> or <replaceable>timeout</replaceable>
+				arguments. If specified, this parameter must be preceded by
+				<literal>n=</literal>.</para>
+			</parameter>
 		</syntax>
 		<description>
 			<para>Record to a file until a given dtmf digit in the sequence is received.
@@ -3072,10 +3079,13 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 
 	struct ast_dsp *sildet=NULL;         /* silence detector dsp */
 	int totalsilence = 0;
+	int totalnoise = 0;
 	int dspsilence = 0;
 	int silence = 0;                /* amount of silence to allow */
+	int noise = 0;					/* amount of noise to require first */
 	int gotsilence = 0;             /* did we timeout for silence? */
 	char *silencestr = NULL;
+	char *noisestr = NULL;
 	RAII_VAR(struct ast_format *, rfmt, NULL, ao2_cleanup);
 	struct ast_silence_generator *silgen = NULL;
 
@@ -3093,6 +3103,16 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 	if ((argc > 8) && (!silencestr))
 		silencestr = strchr(argv[8],'s');
 
+	if (argc > 7) {
+		noisestr = strchr(argv[7], 'n');
+	}
+	if ((argc > 8) && (!noisestr)) {
+		noisestr = strchr(argv[8], 'n');
+	}
+	if ((argc > 9) && (!noisestr)) {
+		noisestr = strchr(argv[9], 'n');
+	}
+
 	if (silencestr) {
 		if (strlen(silencestr) > 2) {
 			if ((silencestr[0] == 's') && (silencestr[1] == '=')) {
@@ -3104,6 +3124,14 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 					silence *= 1000;
 			}
 		}
+	}
+
+	if (noisestr && strlen(noisestr) > 2 && (noisestr[0] == 'n') && (noisestr[1] == '=')) {
+		noisestr += 2;
+		if (!ast_strlen_zero(noisestr)) {
+			noise = atoi(noisestr);
+		}
+		/* already in ms, don't *= 1000 */
 	}
 
 	if (silence > 0) {
@@ -3143,6 +3171,8 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 	if (res) {
 		ast_agi_send(agi->fd, chan, "200 result=%d (randomerror) endpos=%ld\n", res, sample_offset);
 	} else {
+		int gotnoise = noise > 0 ? 0 : 1; /* If not requiring noise, assume we already got it to waive requirement */
+		ast_debug(6, "Will require %d s of silence, and before that, %d ms of noise\n", silence, noise);
 		fs = ast_writefile(argv[2], argv[3], NULL, O_CREAT | O_WRONLY | (sample_offset ? O_APPEND : 0), 0, AST_FILE_MODE);
 		if (!fs) {
 			res = -1;
@@ -3166,7 +3196,7 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 		}
 
 		start = ast_tvnow();
-		while ((ms < 0) || ast_tvdiff_ms(ast_tvnow(), start) < ms) {
+		while ((ms < 0) || (ast_tvdiff_ms(ast_tvnow(), start) < ms)) {
 			res = ast_waitfor(chan, ms - ast_tvdiff_ms(ast_tvnow(), start));
 			if (res < 0) {
 				ast_closestream(fs);
@@ -3213,17 +3243,36 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 				 * location */
 				sample_offset = ast_tellstream(fs);
 				if (silence > 0) {
-					dspsilence = 0;
-					ast_dsp_silence(sildet, f, &dspsilence);
-					if (dspsilence) {
-						totalsilence = dspsilence;
+					if (gotnoise) {
+						dspsilence = 0;
+						ast_dsp_silence(sildet, f, &dspsilence);
+						if (dspsilence) {
+							totalsilence = dspsilence;
+						} else {
+							totalsilence = 0;
+						}
+						ast_debug(3, "total silence: %d (offset %lu)\n", totalsilence, sample_offset);
+						if (totalsilence > silence) {
+							/* Ended happily with silence */
+							gotsilence = 1;
+							ast_debug(3, "Got enough silence (total silence = %d, silence = %d), ending recording\n", totalsilence, silence);
+							break;
+						}
 					} else {
-						totalsilence = 0;
-					}
-					if (totalsilence > silence) {
-						/* Ended happily with silence */
-						gotsilence = 1;
-						break;
+						/* Need to get some audio first before silence detection kicks in */
+						int dspnoise = 0;
+						ast_dsp_noise(sildet, f, &dspnoise);
+						if (dspnoise) {
+							totalnoise = dspnoise;
+						} else {
+							totalnoise = 0;
+						}
+						ast_debug(3, "total noise: %d (offset %lu)\n", totalnoise, sample_offset);
+						if (totalnoise > noise) {
+							ast_debug(3, "Got enough noise (%d) for silence detection to be enabled\n", totalnoise);
+							gotnoise = 1;
+							start = ast_tvnow();
+						}
 					}
 				}
 				break;
@@ -3234,8 +3283,9 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 				break;
 			}
 			ast_frfree(f);
-			if (gotsilence)
+			if (gotsilence) {
 				break;
+			}
 		}
 
 		if (gotsilence) {
@@ -3245,6 +3295,7 @@ static int handle_recordfile(struct ast_channel *chan, AGI *agi, int argc, const
 		}
 		ast_closestream(fs);
 		ast_agi_send(agi->fd, chan, "200 result=%d (timeout) endpos=%ld\n", res, sample_offset);
+		ast_debug(3, "200 result=%d (timeout) endpos=%ld\n", res, sample_offset);
 	}
 
 	if (silence > 0) {
