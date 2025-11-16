@@ -316,6 +316,25 @@ struct ast_channel *ast_local_get_peer(struct ast_channel *ast)
 	return peer;
 }
 
+/*! \brief Determine if text after a '/' is really options or just part of the exten */
+static int really_local_options(char *data)
+{
+	/* The stuff after the slash might actually be part of the exten, not options. If so, don't lop them off. */
+	char *ptr = data;
+	if (strlen(ptr) > 4) {
+		return 0;
+	}
+	while (*ptr) {
+		/* b option no longer exists, but accept it for this purpose for compatibility */
+		if (*ptr != '/' && *ptr != 'n' && *ptr != 'j' && *ptr != 'm' && *ptr != 'b') {
+			return 0;
+		}
+		ptr++;
+	}
+	/* Okay, fine, these are definitely options... */
+	return 1;
+}
+
 /*! \brief Adds devicestate to local channels */
 static int local_devicestate(const char *data)
 {
@@ -340,8 +359,8 @@ static int local_devicestate(const char *data)
 	 * So only start looking for '/' in context, because options would be past
 	 * this point if they exist, but anything before would be a '/' in the exten,
 	 * not options. */
-	opts = strchr(context, '/');
-	if (opts) {
+	opts = strrchr(exten, '/');
+	if (opts && really_local_options(opts)) {
 		*opts = '\0';
 	}
 
@@ -729,7 +748,7 @@ static int local_call(struct ast_channel *ast, const char *dest, int timeout)
 	 * that off for our argument to setting up the CC_INTERFACES
 	 * variable.
 	 */
-	if ((slash = strrchr(reduced_dest, '/'))) {
+	if ((slash = strrchr(reduced_dest, '/')) && really_local_options(slash)) {
 		*slash = '\0';
 	}
 	ast_set_cc_interfaces_chanvar(chan, reduced_dest);
@@ -902,7 +921,7 @@ static struct local_pvt *local_alloc(const char *data, struct ast_stream_topolog
 
 	/* Look for options.
 	 * Slashes can appear in channel names, so options are after the last match. */
-	if ((opts = strrchr(parse, '/'))) {
+	if ((opts = strrchr(parse, '/')) && really_local_options(opts)) {
 		*opts++ = '\0';
 		if (strchr(opts, 'n')) {
 			ast_set_flag(&pvt->base, AST_UNREAL_NO_OPTIMIZATION);
@@ -917,6 +936,9 @@ static struct local_pvt *local_alloc(const char *data, struct ast_stream_topolog
 		if (strchr(opts, 'm')) {
 			ast_clear_flag(&pvt->base, AST_UNREAL_MOH_INTERCEPT);
 		}
+	} else if (opts) {
+		/* This isn't any kind of problem. Slashes are okay in the extension. */
+		ast_debug(3, "Local dial string '%s' contains slash, but no options detected\n", parse);
 	}
 
 	/* Look for a context */
