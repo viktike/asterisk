@@ -1711,6 +1711,37 @@ static int ast_tryconnect(void)
 		return 1;
 }
 
+static int ast_is_starting(void)
+{
+	/* Don't use kill since that only works if Asterisk was started as the same user. */
+	struct stat st;
+	FILE *f;
+	long file_pid;
+	char procpath[PATH_MAX];
+
+	/* Get current value from PID file */
+	f = fopen(ast_config_AST_PID, "r");
+	if (!f) {
+		return 0; /* PID file doesn't exist? No way to tell. */
+	}
+	if (fscanf(f, "%ld", &file_pid) < 1) {
+		file_pid = 0; /* Failure */
+	}
+	fclose(f);
+	if (!file_pid) {
+		return 0;
+	}
+
+	/* Check if such a process is running */
+	snprintf(procpath, sizeof(procpath), "/proc/%ld", file_pid);
+	if (stat(procpath, &st) == -1 && errno == ENOENT) {
+		/* Process doesn't exist */
+		return 0;
+	}
+	return 1;
+}
+
+
 /*! \brief Urgent handler
  *
  * Called by soft_hangup to interrupt the poll, read, or other
@@ -4082,6 +4113,12 @@ int main(int argc, char *argv[])
 		}
 	} else if (ast_opt_remote || ast_opt_exec) {
 		fprintf(stderr, "Unable to connect to remote asterisk (does %s exist?)\n", ast_config_AST_SOCKET);
+		printf("%s", term_quit());
+		exit(1);
+	}
+
+	if (ast_is_starting()) {
+		fprintf(stderr, "Asterisk is currently starting.  Use 'asterisk -r' to connect momentarily.\n");
 		printf("%s", term_quit());
 		exit(1);
 	}
