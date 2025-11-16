@@ -2663,7 +2663,12 @@ done:
 		}
 
 		if (ast_str_strlen(warning_msg)) {
-			ast_log(LOG_WARNING, "%s\n", ast_str_buffer(warning_msg));
+			int notserious = (!strcmp(mod_name, "res_adsi") || !strcmp(mod_name, "app_adsiprog") || !strcmp(mod_name, "app_getcpeid")); /* these are being maintained and there are being kept in the tree indefinitely, so don't alarm people unnecessarily */
+			if (notserious) {
+				ast_log(LOG_NOTICE, "%s\n", ast_str_buffer(warning_msg));
+			} else {
+				ast_log(LOG_WARNING, "%s\n", ast_str_buffer(warning_msg));
+			}
 		}
 
 		ast_free(mod_name);
