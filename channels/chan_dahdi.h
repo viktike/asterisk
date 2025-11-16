@@ -358,6 +358,11 @@ struct dahdi_pvt {
 	unsigned int pulse:1;
 	/*! \brief TRUE if a pulsed digit was detected. (Pulse dial phone detected) */
 	unsigned int pulsedial:1;
+	/*!
+	 * \brief TRUE if we will support real time dial pulsing.
+	 * \note Set from the "realtimepulsing" value read in from chan_dahdi.conf
+	 */
+	unsigned int realtimepulsing:1;
 	unsigned int restartpending:1;		/*!< flag to ensure counted only once for restart */
 	/*!
 	 * \brief TRUE if caller ID is restricted.

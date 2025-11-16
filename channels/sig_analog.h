@@ -88,6 +88,8 @@ enum analog_event {
 	ANALOG_EVENT_RINGEROFF,
 	ANALOG_EVENT_HOOKCOMPLETE,
 	ANALOG_EVENT_PULSE_START,
+	ANALOG_EVENT_PULSE,
+	ANALOG_EVENT_PULSE_BREAK,
 	ANALOG_EVENT_POLARITY,
 	ANALOG_EVENT_RINGBEGIN,
 	ANALOG_EVENT_EC_DISABLED,
@@ -280,6 +282,13 @@ struct analog_pvt {
 	struct analog_dialoperation dop;
 	int onhooktime;							/*< Time the interface went on-hook. */
 	int fxsoffhookstate;					/*< TRUE if the FXS port is off-hook */
+
+	/* Used for real time dial pulsing support */
+	int pulsemakecount;
+	int pulsebreakcount;
+	int pulsemakes[9];
+	int pulsebreaks[9];
+
 	/*! \brief -1 = unknown, 0 = no messages, 1 = new messages available */
 	int msgstate;
 
@@ -303,6 +312,7 @@ struct analog_pvt {
 	unsigned int permhidecallerid:1;		/*!< Whether to hide our outgoing caller ID or not */
 	enum analog_dialmode permdialmode;		/*!< Which of pulse and/or tone dialing to support */
 	unsigned int pulse:1;
+	unsigned int realtimepulsing:1;			/*!< TRUE if realtimepulsing is enabled */
 	unsigned int threewaycalling:1;
 	unsigned int threewaysilenthold:1;		/*!< Whether to time out a three-way dial tone to silence */
 	unsigned int transfer:1;

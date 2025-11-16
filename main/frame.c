@@ -447,6 +447,9 @@ char *ast_frame_subclass2str(struct ast_frame *f, char *subclass, size_t slen, c
 		case AST_CONTROL_FLASH:
 			ast_copy_string(subclass, "Flash", slen);
 			break;
+		case AST_CONTROL_PULSE:
+			ast_copy_string(subclass, "Pulse", slen);
+			break;
 		case AST_CONTROL_WINK:
 			ast_copy_string(subclass, "Wink", slen);
 			break;

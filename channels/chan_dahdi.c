@@ -1204,6 +1204,7 @@ static struct dahdi_chan_conf dahdi_chan_conf_default(void)
 			.mohsuggest = "",
 			.parkinglot = "",
 			.transfertobusy = 1,
+			.realtimepulsing = 0,
 			.permdialmode = ANALOG_DIALMODE_BOTH,
 
 			.ani_info_digits = 2,
@@ -2768,6 +2769,16 @@ static enum analog_event dahdievent_to_analogevent(int event)
 	case DAHDI_EVENT_PULSE_START:
 		res = ANALOG_EVENT_PULSE_START;
 		break;
+#ifdef DAHDI_EVENT_PULSE
+	case DAHDI_EVENT_PULSE:
+		res = ANALOG_EVENT_PULSE;
+		break;
+#endif
+#ifdef DAHDI_EVENT_PULSE_BREAK
+	case DAHDI_EVENT_PULSE_BREAK:
+		res = ANALOG_EVENT_PULSE_BREAK;
+		break;
+#endif
 	case DAHDI_EVENT_POLARITY:
 		res = ANALOG_EVENT_POLARITY;
 		break;
@@ -7913,11 +7924,19 @@ static struct ast_frame *dahdi_handle_event(struct ast_channel *ast)
 		ast_log(LOG_WARNING, "Received bits changed on %s signalling?\n", sig2str(p->sig));
 #endif
 		break;
+#ifdef DAHDI_EVENT_PULSE_START
 	case DAHDI_EVENT_PULSE_START:
 		/* Stop tone if there's a pulse start and the PBX isn't started */
 		if (!ast_channel_pbx(ast))
 			tone_zone_play_tone(p->subs[idx].dfd, -1);
 		break;
+#ifdef DAHDI_EVENT_PULSE_BREAK
+	case DAHDI_EVENT_PULSE:
+	case DAHDI_EVENT_PULSE_BREAK:
+		/* handled in sig_analog */
+		break;
+#endif
+#endif
 	case DAHDI_EVENT_DIALCOMPLETE:
 		/* DAHDI has completed dialing all digits sent using DAHDI_DIAL. */
 #if defined(HAVE_PRI)
@@ -13118,6 +13137,7 @@ static struct dahdi_pvt *mkintf(int channel, const struct dahdi_chan_conf *conf,
 		tmp->immediate = conf->chan.immediate;
 		tmp->immediatering = conf->chan.immediatering;
 		tmp->transfertobusy = conf->chan.transfertobusy;
+		tmp->realtimepulsing = conf->chan.realtimepulsing;
 		tmp->permdialmode = conf->chan.permdialmode;
 		if (chan_sig & __DAHDI_SIG_FXS) {
 			tmp->mwimonitor_fsk = conf->chan.mwimonitor_fsk;
@@ -13461,6 +13481,7 @@ static struct dahdi_pvt *mkintf(int channel, const struct dahdi_chan_conf *conf,
 				analog_p->threewaycalling = conf->chan.threewaycalling;
 				analog_p->transfer = conf->chan.transfer;
 				analog_p->transfertobusy = conf->chan.transfertobusy;
+				analog_p->realtimepulsing = conf->chan.realtimepulsing;
 				analog_p->permdialmode = conf->chan.permdialmode;
 				analog_p->use_callerid = tmp->use_callerid;
 				analog_p->usedistinctiveringdetection = tmp->usedistinctiveringdetection;
@@ -19041,6 +19062,8 @@ static int process_dahdi(struct dahdi_chan_conf *confp, const char *cat, struct 
 			confp->chan.immediatering = ast_true(v->value);
 		} else if (!strcasecmp(v->name, "transfertobusy")) {
 			confp->chan.transfertobusy = ast_true(v->value);
+		} else if (!strcasecmp(v->name, "realtimepulsing")) {
+			confp->chan.realtimepulsing = ast_true(v->value);
 		} else if (!strcasecmp(v->name, "dialmode")) {
 			if (!strcasecmp(v->value, "pulse")) {
 				confp->chan.permdialmode = ANALOG_DIALMODE_PULSE;

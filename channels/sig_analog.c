@@ -290,6 +290,12 @@ static char *analog_event2str(enum analog_event event)
 	case ANALOG_EVENT_PULSE_START:
 		res = "ANALOG_EVENT_PULSE_START";
 		break;
+	case ANALOG_EVENT_PULSE:
+		res = "ANALOG_EVENT_PULSE";
+		break;
+	case ANALOG_EVENT_PULSE_BREAK:
+		res = "ANALOG_EVENT_PULSE_BREAK";
+		break;
 	case ANALOG_EVENT_POLARITY:
 		res = "ANALOG_EVENT_POLARITY";
 		break;
@@ -3165,9 +3171,29 @@ static struct ast_frame *__analog_handle_event(struct analog_pvt *p, struct ast_
 		break;
 #endif
 	case ANALOG_EVENT_PULSE_START:
+		p->pulsemakecount = p->pulsebreakcount = 0;
 		/* Stop tone if there's a pulse start and the PBX isn't started */
 		if (!ast_channel_pbx(ast))
 			analog_play_tone(p, ANALOG_SUB_REAL, -1);
+		break;
+	case ANALOG_EVENT_PULSE:
+		if (p->realtimepulsing) {
+			ast_queue_control(p->subs[ANALOG_SUB_REAL].owner, AST_CONTROL_PULSE);
+			if (p->pulsemakecount < 9) {
+				struct timespec now = ast_tsnow();
+				p->pulsemakes[p->pulsemakecount] = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+				p->pulsemakecount++;
+			}
+		}
+		break;
+	case ANALOG_EVENT_PULSE_BREAK:
+		if (p->realtimepulsing) {
+			if (p->pulsebreakcount < 9) {
+				struct timespec now = ast_tsnow();
+				p->pulsebreaks[p->pulsebreakcount] = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+				p->pulsebreakcount++;
+			}
+		}
 		break;
 	case ANALOG_EVENT_DIALCOMPLETE:
 		if (p->inalarm) {

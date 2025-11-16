@@ -3324,6 +3324,7 @@ int ast_waitfordigit_full(struct ast_channel *c, int timeout_ms, const char *bre
 				case AST_CONTROL_HOLD:
 				case AST_CONTROL_UNHOLD:
 				case AST_CONTROL_FLASH:
+				case AST_CONTROL_PULSE:
 				case -1:
 					/* Unimportant */
 					break;
@@ -4328,6 +4329,7 @@ static int attribute_const is_visible_indication(enum ast_control_frame_type con
 	case AST_CONTROL_OPTION:
 	case AST_CONTROL_WINK:
 	case AST_CONTROL_FLASH:
+	case AST_CONTROL_PULSE:
 	case AST_CONTROL_OFFHOOK:
 	case AST_CONTROL_TAKEOFFHOOK:
 	case AST_CONTROL_ANSWER:
@@ -4630,6 +4632,7 @@ static int indicate_data_internal(struct ast_channel *chan, int _condition, cons
 	case AST_CONTROL_OPTION:
 	case AST_CONTROL_WINK:
 	case AST_CONTROL_FLASH:
+	case AST_CONTROL_PULSE:
 	case AST_CONTROL_OFFHOOK:
 	case AST_CONTROL_TAKEOFFHOOK:
 	case AST_CONTROL_ANSWER:

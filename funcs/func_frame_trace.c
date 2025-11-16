@@ -269,6 +269,9 @@ static void print_frame(struct ast_frame *frame)
 		case AST_CONTROL_CONGESTION:
 			ast_verbose("SubClass: CONGESTION\n");
 			break;
+		case AST_CONTROL_PULSE:
+			ast_verbose("SubClass: PULSE\n");
+			break;
 		case AST_CONTROL_FLASH:
 			ast_verbose("SubClass: FLASH\n");
 			break;

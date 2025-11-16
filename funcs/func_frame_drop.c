@@ -76,6 +76,7 @@
 					<enum name = "TAKEOFFHOOK" />
 					<enum name = "OFFHOOK" />
 					<enum name = "CONGESTION" />
+					<enum name = "PULSE" />
 					<enum name = "FLASH" />
 					<enum name = "WINK" />
 					<enum name = "PROGRESS" />
@@ -133,6 +134,7 @@ static struct {
 	{ AST_CONTROL_TAKEOFFHOOK,   ",TAKEOFFHOOK," },
 	{ AST_CONTROL_OFFHOOK,   ",OFFHOOK," },
 	{ AST_CONTROL_CONGESTION,   ",CONGESTION," },
+	{ AST_CONTROL_PULSE,  ",PULSE," },
 	{ AST_CONTROL_FLASH,   ",FLASH," },
 	{ AST_CONTROL_WINK,   ",WINK," },
 	{ AST_CONTROL_PROGRESS,   ",PROGRESS," },

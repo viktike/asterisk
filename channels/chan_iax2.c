@@ -1460,6 +1460,7 @@ static int iax2_is_control_frame_allowed(int subtype)
 	case AST_CONTROL_TAKEOFFHOOK:
 	case AST_CONTROL_OFFHOOK:
 	case AST_CONTROL_CONGESTION:
+	case AST_CONTROL_PULSE:
 	case AST_CONTROL_FLASH:
 	case AST_CONTROL_WINK:
 	case AST_CONTROL_OPTION:

@@ -312,6 +312,7 @@ enum ast_control_frame_type {
 	AST_CONTROL_STREAM_TOPOLOGY_REQUEST_CHANGE = 35,    /*!< Channel indication that a stream topology change has been requested */
 	AST_CONTROL_STREAM_TOPOLOGY_CHANGED = 36,           /*!< Channel indication that a stream topology change has occurred */
 	AST_CONTROL_STREAM_TOPOLOGY_SOURCE_CHANGED = 37,    /*!< Channel indication that one of the source streams has changed its source */
+	AST_CONTROL_PULSE = 38,			/*!< Dial Pulse */
 
 	/*
 	 * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
