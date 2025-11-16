@@ -47,7 +47,7 @@
 		</synopsis>
 		<syntax>
 			<parameter name="connection" required="true"/>
-			<parameter name="dbname" required="false"/>
+			<parameter name="database" required="false"/>
 			<parameter name="collection" required="false"/>
 			<parameter name="document" required="true"/>
          <parameter name="options" required="false">
@@ -332,7 +332,7 @@ static int load_module(void)
 	
 	res = ast_register_application_xml(app, push_exec);
 
-	return res ? AST_MODULE_LOAD_DECLINE : AST_MODULE_LOAD_SUCCESS;
+	return res ? AST_MODULE_LOAD_FAILURE : AST_MODULE_LOAD_SUCCESS;
 }
 
 static int unload_module(void)
@@ -346,7 +346,7 @@ static int reload_module(void)
 }
 
 AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "MongoDB Push Dialplan Application",
-	.support_level = AST_MODULE_SUPPORT_CORE,
+	.support_level = AST_MODULE_SUPPORT_EXTENDED,
 	.load = load_module,
 	.unload = unload_module,
 	.reload = reload_module,
