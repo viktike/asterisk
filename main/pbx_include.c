@@ -38,6 +38,8 @@ struct ast_include {
 	const char *name;
 	/*! Context to include */
 	const char *rname;
+	/*! Prefix to strip for include traversal */
+	const char *prefix;
 	/*! Registrar */
 	const char *registrar;
 	/*! If time construct exists */
@@ -50,6 +52,11 @@ struct ast_include {
 const char *ast_get_include_name(const struct ast_include *inc)
 {
 	return inc ? inc->name : NULL;
+}
+
+const char *include_prefix(const struct ast_include *inc)
+{
+	return inc ? inc->prefix : NULL;
 }
 
 const char *include_rname(const struct ast_include *inc)
@@ -74,7 +81,7 @@ int include_valid(const struct ast_include *inc)
 struct ast_include *include_alloc(const char *value, const char *registrar)
 {
 	struct ast_include *new_include;
-	char *c;
+	char *c, *prefix = NULL;
 	int valuebufsz = strlen(value) + 1;
 	char *p;
 
@@ -96,15 +103,32 @@ struct ast_include *include_alloc(const char *value, const char *registrar)
 	/* Strip off timing info, and process if it is there */
 	if ( (c = strchr(p, '|')) || (c = strchr(p, ',')) ) {
 		*c++ = '\0';
+		if (c) {
+			prefix = strchr(c, '|');
+			if (prefix) {
+				*prefix++ = '\0';
+			}
+		}
 		new_include->hastime = ast_build_timing(&(new_include->timing), c);
 	}
 	new_include->registrar = registrar;
+
+	if (!ast_strlen_zero(prefix)) {
+		ast_debug(2, "include is prefixed: '%s'\n", prefix);
+		new_include->prefix = ast_strdup(prefix);
+		if (!new_include->prefix) {
+			ast_log(LOG_ERROR, "Failed to strdup prefix\n");
+		}
+	}
 
 	return new_include;
 }
 
 void include_free(struct ast_include *inc)
 {
+	if (inc->prefix) {
+		ast_free((char*) inc->prefix);
+	}
 	ast_destroy_timing(&(inc->timing));
 	ast_free(inc);
 }

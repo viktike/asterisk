@@ -2787,10 +2787,34 @@ struct ast_exten *pbx_find_extension(struct ast_channel *chan,
 		const struct ast_include *i = ast_context_includes_get(tmp, idx);
 
 		if (include_valid(i)) {
-			if ((e = pbx_find_extension(chan, bypass, q, include_rname(i), exten, priority, label, callerid, action))) {
+			const char *include_exten = exten;
+			const char *prefix = include_prefix(i);
+			if (!ast_strlen_zero(prefix)) {
+				/* Determine if we should remove a prefix before accessing the
+				 * extensions in an include. For example, remove '9' from
+				 * from-internal before going to included context pstn. */
+				int pfxlen = strlen(prefix);
+				if (!strncmp(include_exten, prefix, pfxlen)) {
+					include_exten += pfxlen;
+					if (ast_strlen_zero(include_exten)) {
+						ast_debug(1, "Removed prefix '%s' for included context '%s', but the prefix was the entire extension, reverting\n",
+							prefix, include_rname(i));
+						include_exten -= pfxlen; /* Tack the prefix back on, since this wasn't really a prefix. */
+					} else {
+						ast_debug(2, "Removing prefix '%s' (=> %s) before searching included context '%s'\n", prefix, include_exten, include_rname(i));
+					}
+				} else {
+					 continue;
+				}
+			}
+			if ((e = pbx_find_extension(chan, bypass, q, include_rname(i), include_exten, priority, label, callerid, action))) {
 #ifdef NEED_DEBUG_HERE
 				ast_log(LOG_NOTICE,"Returning recursive match of %s\n", e->exten);
 #endif
+				if (0 && action == E_SPAWN && chan && include_exten != exten) { /* XXX Do not do this or it will mess up execution after priority 1 */
+					ast_debug(1, "Updating EXTEN from %s to %s\n", exten, include_exten); /* And don't set the context explicitly, that's wrong. EXTEN cannot change. */
+					ast_channel_exten_set(chan, include_exten); /* So that ${EXTEN} matches the EXTEN in the included context */
+				}
 				return e;
 			}
 			if (q->swo)

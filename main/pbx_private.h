@@ -48,6 +48,7 @@ struct ast_include *include_alloc(const char *value, const char *registrar);
 void include_free(struct ast_include *inc);
 int include_valid(const struct ast_include *inc);
 const char *include_rname(const struct ast_include *inc);
+const char *include_prefix(const struct ast_include *inc);
 
 /*! pbx_sw.c */
 struct ast_sw;
