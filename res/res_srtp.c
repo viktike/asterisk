@@ -493,8 +493,18 @@ tryagain:
 		 * whether they use a custom library or an outdated version of libSRTP.
 		 */
 		if (rtcp) {
-			ast_verb(2, "SRTCP unprotect failed on SSRC %u because of %s\n",
-				ast_rtp_instance_get_ssrc(srtp->rtp), srtp_errstr(res));
+			/* This patch makes it slightly less annoying when SRTP is used
+				with ATAs like the Grandstream HT 7xx. Otherwise, we
+				get a message in the CLI every second. */
+			if (srtp->warned % 30) {
+				srtp->warned++;
+			} else if (srtp->warned >= 30) {
+				srtp->warned = 6;
+			}
+			if (srtp->warned < 5 || !(srtp->warned % 30)) {
+				ast_verb(2, "SRTCP unprotect failed on SSRC %u because of %s\n",
+					ast_rtp_instance_get_ssrc(srtp->rtp), srtp_errstr(res));
+			}
 		} else {
 			if ((srtp->warned >= 10) && !((srtp->warned - 10) % 150)) {
 				ast_verb(2, "SRTP unprotect failed on SSRC %u because of %s %d\n",
