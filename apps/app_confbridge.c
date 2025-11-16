@@ -1812,11 +1812,13 @@ void confbridge_handle_atxfer(struct ast_attended_transfer_message *msg)
  */
 static struct confbridge_conference *join_conference_bridge(const char *conference_name, struct confbridge_user *user)
 {
-	struct confbridge_conference *conference;
+	struct confbridge_conference *conference, *conference2;
 	struct post_join_action *action;
 	int max_members_reached = 0;
 
 	/* We explicitly lock the conference bridges container ourselves so that other callers can not create duplicate conferences at the same time */
+attempt:
+	/* We explicitly lock the conference bridges container ourselves so that other callers can not create duplicate conferences at the same */
 	ao2_lock(conference_bridges);
 
 	ast_debug(1, "Trying to find conference bridge '%s'\n", conference_name);
@@ -1987,6 +1989,21 @@ static struct confbridge_conference *join_conference_bridge(const char *conferen
 		leave_conference(user);
 		return NULL;
 	}
+
+	/* Rare, but if threads interleave exactly right, the bridge could disappear
+	 * just AFTER we found it. At this point, it's not empty anymore, so if it's
+	 * still intact, it's safe to use. If not, then start over, or we'll end
+	 * up joining a ghost bridge that isn't registered anymore in the conf list. */
+	conference2 = ao2_find(conference_bridges, conference_name, OBJ_KEY);
+	if (conference != conference2) {
+		ao2_unlock(conference);
+		leave_conference(user);
+		ast_debug(1, "Conference (bridge %p) %s before we could join it\n",
+			conference->bridge, conference2 ? "changed" : "disappeared");
+		goto attempt;
+	}
+
+	ao2_ref(conference2, -1);
 
 	ao2_unlock(conference);
 
@@ -2930,6 +2947,8 @@ static int confbridge_exec(struct ast_channel *chan, const char *data)
 	if (ast_bridge_join_hook(&user.features, join_callback, NULL, NULL, 0)) {
 		async_play_sound_ready(user.chan);
 	}
+
+	ast_debug(2, "Joining conference in bridge %p\n", conference->bridge);
 
 	ast_bridge_join(conference->bridge,
 		chan,
