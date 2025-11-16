@@ -1217,6 +1217,7 @@ static struct dahdi_chan_conf dahdi_chan_conf_default(void)
 			.use_callerid = 1,
 			.sig = -1,
 			.outsigmod = -1,
+			.hearpulsing = 0,
 
 			.cid_rxgain = +5.0,
 
@@ -9173,7 +9174,7 @@ static struct ast_frame *dahdi_read(struct ast_channel *ast)
 #if 0
 	ast_debug(1, "Read %d of voice on %s\n", p->subs[idx].f.datalen, ast->name);
 #endif
-	if ((p->dialing && !p->waitingfordt.tv_sec) ||  p->radio || /* Transmitting something */
+	if ((!p->hearpulsing && ( (p->dialing && !p->waitingfordt.tv_sec) ||  p->radio )) || /* Transmitting something */
 		(idx && (ast_channel_state(ast) != AST_STATE_UP)) || /* Three-way or callwait that isn't up */
 		((idx == SUB_CALLWAIT) && !p->subs[SUB_CALLWAIT].inthreeway) /* Inactive and non-confed call-wait */
 		) {
@@ -13206,6 +13207,7 @@ static struct dahdi_pvt *mkintf(int channel, const struct dahdi_chan_conf *conf,
 		tmp->dahditrcallerid = conf->chan.dahditrcallerid;
 		tmp->restrictcid = conf->chan.restrictcid;
 		tmp->use_callingpres = conf->chan.use_callingpres;
+		tmp->hearpulsing = conf->chan.hearpulsing;
 		if (tmp->usedistinctiveringdetection) {
 			if (!tmp->use_callerid) {
 				ast_log(LOG_NOTICE, "Distinctive Ring detect requires 'usecallerid' be on\n");
@@ -13357,6 +13359,7 @@ static struct dahdi_pvt *mkintf(int channel, const struct dahdi_chan_conf *conf,
 		tmp->ani_wink_time = conf->chan.ani_wink_time;
 		tmp->ani_timeout = conf->chan.ani_timeout;
 		tmp->hanguponpolarityswitch = conf->chan.hanguponpolarityswitch;
+		tmp->hearpulsing = conf->chan.hearpulsing;
 		tmp->reoriginate = conf->chan.reoriginate;
 		tmp->sendcalleridafter = conf->chan.sendcalleridafter;
 		ast_cc_copy_config_params(tmp->cc_params, conf->chan.cc_params);
@@ -13466,6 +13469,7 @@ static struct dahdi_pvt *mkintf(int channel, const struct dahdi_chan_conf *conf,
 				analog_p->ani_timeout = conf->chan.ani_timeout;
 				analog_p->ani_wink_time = conf->chan.ani_wink_time;
 				analog_p->hanguponpolarityswitch = conf->chan.hanguponpolarityswitch;
+				analog_p->hearpulsing = conf->chan.hearpulsing;
 				analog_p->permcallwaiting = conf->chan.callwaiting; /* permcallwaiting possibly modified in analog_config_complete */
 				analog_p->calledsubscriberheld = conf->chan.calledsubscriberheld; /* Only actually used in analog pvt, not DAHDI pvt */
 				analog_p->callreturn = conf->chan.callreturn;
@@ -19176,6 +19180,8 @@ static int process_dahdi(struct dahdi_chan_conf *confp, const char *cat, struct 
 			confp->chan.reoriginate = ast_true(v->value);
 		} else if (!strcasecmp(v->name, "sendcalleridafter")) {
 			confp->chan.sendcalleridafter = atoi(v->value);
+		} else if(!strcasecmp(v->name, "hearpulsing")) {
+			confp->chan.hearpulsing = ast_true(v->value);
 		} else if (!strcasecmp(v->name, "mwimonitornotify")) {
 			ast_copy_string(mwimonitornotify, v->value, sizeof(mwimonitornotify));
 		} else if (ast_cc_is_config_param(v->name)) {

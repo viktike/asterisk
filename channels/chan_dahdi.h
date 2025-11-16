@@ -483,6 +483,11 @@ struct dahdi_pvt {
 	struct sig_pri_span *pri;
 	int logicalspan;
 #endif	/* defined(HAVE_PRI) */
+
+	/*!\brief TRUE if the caller should hear signaling on analog
+	 * \analog channels
+	 */
+	unsigned int hearpulsing:1;
 	/*!
 	 * \brief TRUE if SMDI (Simplified Message Desk Interface) is enabled
 	 * \note Set from the "usesmdi" value read in from chan_dahdi.conf

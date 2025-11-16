@@ -1293,6 +1293,13 @@ int analog_call(struct analog_pvt *p, struct ast_channel *ast, const char *rdest
 		ast_debug(1, "not yet implemented\n");
 		return -1;
 	}
+
+	/* Allows callers to hear pulsing on analog channels */
+	if (p->hearpulsing) {
+		ast_debug(1, "Enqueueing progress frame when dialling has begun in chan %d\n", p->channel);
+		ast_queue_control(p->owner, AST_CONTROL_PROGRESS);
+	}
+
 	return 0;
 }
 
