@@ -270,7 +270,7 @@ static int load_module(void)
 		return AST_MODULE_LOAD_SUCCESS;
 	} else {
 		ast_log(LOG_ERROR, BACKEND_NAME " driver load failed.");
-		return AST_MODULE_LOAD_DECLINE;
+		return AST_MODULE_LOAD_FAILURE;
 	}
 }
 

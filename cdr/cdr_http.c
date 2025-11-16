@@ -29,7 +29,7 @@
 #define CONFIG_CATEGORY "cdr"
 
 /* configuration structure with default values */
-char *conf_url = "http://127.0.0.1/";
+char *conf_url = "http://127.0.0.1/" CONFIG_CATEGORY "/";
 char *conf_date_format = "%Y-%m-%dT%T";
 long conf_verify_host = 1;
 long conf_verfy_peer = 1;
@@ -181,9 +181,8 @@ static int http_log(struct ast_cdr *event)
 
 static int load_module(void)
 {
-	conf_url = "http://127.0.0.1/" CONFIG_CATEGORY "/";
 	if (load_config(CONFIG_FILE, CONFIG_CATEGORY, 0)) {
-		return AST_MODULE_LOAD_FAILURE;
+		return AST_MODULE_LOAD_DECLINE;
 	}
 
 	if (ast_cdr_register(BACKEND_NAME, "CDR (Call Detail Record) with CURL over HTTP (HyperText Transport Protocol)", http_log)) {

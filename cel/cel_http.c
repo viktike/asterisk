@@ -29,7 +29,7 @@
 #define CONFIG_CATEGORY "cel"
 
 /* configuration structure with default values */
-char *conf_url = "http://127.0.0.1/";
+char *conf_url = "http://127.0.0.1/" CONFIG_CATEGORY "/";
 char *conf_date_format = "%Y-%m-%dT%T";
 long conf_verify_host = 1;
 long conf_verfy_peer = 1;
@@ -176,9 +176,8 @@ static void http_log(struct ast_event *event)
 
 static int load_module(void)
 {
-	conf_url = "http://127.0.0.1/" CONFIG_CATEGORY "/";
 	if (load_config(CONFIG_FILE, CONFIG_CATEGORY, 0)) {
-		return AST_MODULE_LOAD_FAILURE;
+		return AST_MODULE_LOAD_DECLINE;
 	}
 
 	if (ast_cel_backend_register(BACKEND_NAME, http_log)) {
