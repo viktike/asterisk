@@ -28,8 +28,10 @@ sudo ./contrib/scripts/install_prereq install
 
 # Compile manually:
 #    app_konference.so
+#    app_tiresias.so
 #    app_voicechanger.so
 #    chan_dongle.so
 #    chan_quectel.so
 #    chan_sccp.so
 #    res_speech_vosk.so
+#
