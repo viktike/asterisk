@@ -1241,6 +1241,8 @@ int __ast_register_translator(struct ast_translator *t, struct ast_module *mod)
 	RAII_VAR(struct ast_codec *, src_codec, NULL, ao2_cleanup);
 	RAII_VAR(struct ast_codec *, dst_codec, NULL, ao2_cleanup);
 
+	ast_log(LOG_NOTICE, "Registering translator: %s  (format=%s)\n", t->name, t->format ? t->format : "<null>");
+
 	src_codec = ast_codec_get(t->src_codec.name, t->src_codec.type, t->src_codec.sample_rate);
 	if (!src_codec) {
 		ast_assert(0);
