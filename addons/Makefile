@@ -43,11 +43,11 @@ ALL_C_MODS:=chan_mobile \
 	    app_mysql \
 	    cdr_mysql \
 	    cel_mysql \
-            app_my    
+	    app_my
 
 res_json.so: cJSON.o res_json.o
 
-$(call MOD_ADD_C,app_my,$(wildcard my/*.c))
+# app_my.so: my/auth.o my/config.o my/database.o my/query.o app_my.o
 
 all: check_mp3 _all
 
@@ -76,6 +76,9 @@ include $(ASTTOPDIR)/Makefile.moddir_rules
 chan_mobile.o: _ASTCFLAGS+=$(AST_NO_FORMAT_TRUNCATION)
 chan_ooh323.so: _ASTCFLAGS+=$(H323CFLAGS)
 app_flite.so: _ASTLDFLAGS+=-lflite_cmu_us_kal -lflite_cmu_us_kal16 -lflite_cmu_us_awb -lflite_cmu_us_rms -lflite_cmu_us_slt -lflite_usenglish -lflite_cmulex -lflite_cmu_us_slt
+
+
+$(call MOD_ADD_C,app_my,my/auth.c my/config.c my/database.c my/query.c)
 $(call MOD_ADD_C,chan_ooh323,$(H323SOURCE))
 
 ifneq ($(wildcard mp3/Makefile),)

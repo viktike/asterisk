@@ -1,0 +1,7 @@
+[global]
+;dbname = asterisk
+;user = asterisk
+;password = supersecretpassword
+;charset = utf8
+;hostname = localhost
+;port = 3306

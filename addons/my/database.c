@@ -3,8 +3,9 @@
  * Licensed under the GPL2+
  */
 
-
-#define AST_MODULE_SELF_SYM __app_my_self
+#ifndef AST_MODULE
+#define AST_MODULE "app_my"
+#endif
 
 #include <asterisk.h>
 #include <asterisk/cli.h>
@@ -40,14 +41,14 @@ database_release (MYSQL *mysql)
   if (mysql != NULL)
     ast_mutex_unlock (&mysql_lock);
   else
-    ast_log (LOG_ERROR, AST_MODULE ": releasing NULL connection.");
+    ast_log (LOG_ERROR, "Releasing NULL connection.");
 }
 
 void
 ast_log_mysql_error (const char *func_name)
 {
   ast_log (LOG_ERROR,
-           AST_MODULE ": %s returned %s (%d)\n",
+           "%s returned %s (%d)\n",
            func_name,
            mysql_error (&mysql),
            mysql_errno (&mysql));
@@ -84,7 +85,7 @@ db_reconnect:
       else
         {
           ast_log (LOG_ERROR,
-                   AST_MODULE ": cannot connect to database server %s.\n",
+                   "cannot connect to database server %s.\n",
                    config.hostname);
           connected = 0;
         }
@@ -100,7 +101,7 @@ db_reconnect:
             {
             case CR_SERVER_GONE_ERROR:
             case CR_SERVER_LOST:
-              ast_log (LOG_ERROR, AST_MODULE ": Server has gone away. Attempting to reconnect.\n");
+              ast_log (LOG_ERROR, "Server has gone away. Attempting to reconnect.\n");
               break;
             default:
               ast_log_mysql_error ("mysql_ping");
@@ -111,7 +112,7 @@ db_reconnect:
           if (retries)
             goto db_reconnect;
 
-          ast_log (LOG_ERROR, AST_MODULE ": Retried to connect fives times, giving up.\n");
+          ast_log (LOG_ERROR, "Retried to connect fives times, giving up.\n");
         }
     }
 

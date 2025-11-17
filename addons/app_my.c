@@ -8,6 +8,11 @@
         <depend>mysqlclient</depend>
  ***/
 
+
+#ifndef AST_MODULE
+#define AST_MODULE "app_my"
+#endif
+
 #include <asterisk.h>
 #include <asterisk/cli.h>
 #include <asterisk/module.h>

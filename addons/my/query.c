@@ -3,8 +3,6 @@
  * Licensed under the GPL2+
  */
 
-#define AST_MODULE_SELF_SYM __app_my_self
-
 #include <asterisk.h>
 #include <asterisk/linkedlists.h>
 #include <asterisk/app.h>
@@ -17,6 +15,7 @@
 #include <asterisk/pbx.h>
 
 #include "database.h"
+#include "query.h"
 
 /*****************************************************************************
  * MyQuery application                                                       *

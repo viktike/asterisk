@@ -3,7 +3,10 @@
  * Licensed under the GPL2+
  */
 
-#define AST_MODULE_SELF_SYM __app_my_self
+#ifndef AST_MODULE
+#define AST_MODULE "app_my"
+#endif
+
 
 #include <asterisk.h>
 #include <asterisk/config.h>
@@ -30,7 +33,7 @@ config_init (void)
 
   cfg = ast_config_load (CONFIG_FILE, flag);
   if (!cfg)
-    ast_log (LOG_WARNING, AST_MODULE ": Unable to load " CONFIG_FILE "\n");
+    ast_log (LOG_WARNING, "Unable to load " CONFIG_FILE "\n");
   else
     var = ast_variable_browse (cfg, "global");
 

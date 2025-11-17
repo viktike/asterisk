@@ -3,8 +3,6 @@
  * Licensed under the GPL2+
  */
 
-#define AST_MODULE_SELF_SYM __app_my_self
-
 #include <asterisk.h>
 #include <asterisk/linkedlists.h>
 #include <asterisk/app.h>
@@ -18,6 +16,7 @@
 #include <asterisk/channel.h>
 
 #include "database.h"
+#include "auth.h"
 
 #define MAX_RETRIES 3
 
