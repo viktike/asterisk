@@ -1,0 +1,107 @@
+; Asterisk AWS Module Configuration
+; Place this file as /etc/asterisk/res_aws.conf
+; 
+; This configuration file defines AWS credentials, regions, and service settings
+; for the res_aws module.
+
+[general]
+; AWS Region - the region where your AWS resources are located
+; Default: us-east-1
+region = us-west-2
+
+; Default SQS queue URL for the AwsSqsSend application
+; If specified, you can use queue names instead of full URLs in dialplan
+; Optional - if not set, full URLs must be provided to AwsSqsSend
+default_queue_url = https://sqs.us-west-2.amazonaws.com/123456789012/asterisk-default
+
+; HTTP timeout for AWS API calls in milliseconds
+; Default: 4000 (4 seconds)
+http_timeout_ms = 5000
+
+; Credential refresh skew in seconds - how early to refresh expiring credentials
+; Default: 120 (2 minutes before expiry)
+refresh_skew = 300
+
+; Enable debug logging (0 = disabled, 1 = enabled)
+; Default: 0
+; When enabled, logs detailed AWS operation information
+debug = 0
+
+[static]
+; Static AWS credentials - use only if you cannot use IAM roles
+; SECURITY WARNING: Static credentials in config files are less secure
+; than using IAM roles, ECS task roles, or environment variables
+;
+; Only uncomment these if you must use static credentials:
+;access_key_id = AKIAIOSFODNN7EXAMPLE
+;secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+;session_token = optional-session-token-for-temporary-credentials
+
+[sts]
+; AWS STS (Security Token Service) configuration for cross-account access
+; Use this section to assume roles in other AWS accounts
+;
+; The ARN of the role to assume
+;role_arn = arn:aws:iam::123456789012:role/AsteriskCrossAccountRole
+;
+; External ID for additional security (if required by the role)
+;external_id = unique-external-identifier
+;
+; Session name for the assumed role session (optional)
+; Default: asterisk-session
+;session_name = asterisk-pbx-session
+
+[queues]
+; Named queue mappings for the AwsSqsSend application
+; This allows you to use short names in dialplan instead of full URLs
+;
+; Format: queue_name = full_sqs_queue_url
+;
+; Examples:
+main = https://sqs.us-west-2.amazonaws.com/123456789012/asterisk-main
+alerts = https://sqs.us-west-2.amazonaws.com/123456789012/asterisk-alerts.fifo
+voicemail = https://sqs.us-west-2.amazonaws.com/123456789012/asterisk-voicemail
+recordings = https://sqs.us-west-2.amazonaws.com/123456789012/asterisk-recordings
+;
+; Standard SQS queue example:
+;notifications = https://sqs.us-east-1.amazonaws.com/987654321098/asterisk-notifications
+;
+; FIFO queue example (note the .fifo suffix):
+;critical_alerts = https://sqs.eu-west-1.amazonaws.com/555666777888/asterisk-critical.fifo
+
+; CONFIGURATION NOTES:
+;
+; 1. CREDENTIAL PRIORITY ORDER:
+;    The module will try to obtain credentials in this order:
+;    a) Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
+;    b) Static configuration ([static] section)
+;    c) ECS task role (when running in ECS)
+;    d) EC2 instance metadata service (IMDS) 
+;    e) STS assume role ([sts] section)
+;
+; 2. RECOMMENDED AUTHENTICATION METHODS:
+;    - Production: Use IAM roles (ECS task roles or EC2 instance roles)
+;    - Development: Use environment variables or AWS CLI profiles
+;    - Avoid static credentials in production environments
+;
+; 3. REGION CONSIDERATIONS:
+;    - The region setting affects all AWS service calls
+;    - SQS queue URLs must match the configured region
+;    - S3 buckets have region-specific endpoints
+;
+; 4. QUEUE NAMING:
+;    - Queue names in [queues] section are case-sensitive
+;    - FIFO queues must have .fifo suffix in their actual AWS name
+;    - Queue URLs must be exact (copy from AWS console)
+;
+; 5. SECURITY BEST PRACTICES:
+;    - Use least-privilege IAM policies
+;    - Enable AWS CloudTrail for API logging
+;    - Consider VPC endpoints for internal traffic
+;    - Rotate credentials regularly if using static keys
+;
+; 6. TROUBLESHOOTING:
+;    - Use CLI command "aws show status" to check credentials
+;    - Use CLI command "aws refresh" to force credential refresh
+;    - Enable debug=1 for detailed operation logging
+;    - Check Asterisk logs for AWS-related errors
