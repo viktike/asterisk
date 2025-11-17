@@ -25,3 +25,11 @@ sudo ./contrib/scripts/install_prereq install
 # Download
 ./contrib/scripts/get_mp3_source.sh
 ./contrib/scripts/get_ilbc_source.sh
+
+# Compile manually:
+#    app_konference.so
+#    app_voicechanger.so
+#    chan_dongle.so
+#    chan_quectel.so
+#    chan_sccp.so
+#    res_speech_vosk.so

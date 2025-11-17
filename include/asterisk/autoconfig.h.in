@@ -276,6 +276,9 @@
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
+/* Define to 1 if you have the eSpeak next-generation library. */
+#undef HAVE_ESPEAK
+
 /* Define to 1 if you have the `euidaccess' function. */
 #undef HAVE_EUIDACCESS
 
@@ -962,6 +965,9 @@
 
 /* Define if your system has the RTLD_NOLOAD headers. */
 #undef HAVE_RTLD_NOLOAD
+
+/* Define to 1 if you have the Audio sampling rate converter library. */
+#undef HAVE_SAMPLERATE
 
 /* Define to 1 if your system has /sbin/launchd. */
 #undef HAVE_SBIN_LAUNCHD

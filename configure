@@ -1260,6 +1260,14 @@ PBX_BKTR
 BKTR_DIR
 BKTR_INCLUDE
 BKTR_LIB
+PBX_SAMPLERATE
+SAMPLERATE_DIR
+SAMPLERATE_INCLUDE
+SAMPLERATE_LIB
+PBX_ESPEAK
+ESPEAK_DIR
+ESPEAK_INCLUDE
+ESPEAK_LIB
 PBX_BCG729
 BCG729_DIR
 BCG729_INCLUDE
@@ -1534,6 +1542,8 @@ with_bfd
 with_zmq
 with_consul
 with_bcg729
+with_espeak_ng
+with_samplerate
 with_execinfo
 with_bluetooth
 with_cap
@@ -2344,6 +2354,8 @@ Optional Packages:
                           in PATH
   --with-bcg729=PATH      use BelledonneCommunications G.729 (Linphone) files
                           in PATH
+  --with-espeak-ng=PATH   use eSpeak next-generation files in PATH
+  --with-samplerate=PATH  use Audio sampling rate converter files in PATH
   --with-execinfo=PATH    use Stack Backtrace files in PATH
   --with-bluetooth=PATH   use Bluetooth files in PATH
   --with-cap=PATH         use POSIX 1.e capabilities files in PATH
@@ -22295,6 +22307,72 @@ then :
 	*)
 	BCG729_DIR="${withval}"
 	ac_mandatory_list="${ac_mandatory_list} BCG729"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    ESPEAK_DESCRIP="eSpeak next-generation"
+    ESPEAK_OPTION="espeak-ng"
+    PBX_ESPEAK=0
+
+# Check whether --with-espeak-ng was given.
+if test ${with_espeak_ng+y}
+then :
+  withval=$with_espeak_ng;
+	case ${withval} in
+	n|no)
+	USE_ESPEAK=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_ESPEAK=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} ESPEAK"
+	;;
+	*)
+	ESPEAK_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} ESPEAK"
+	;;
+	esac
+
+fi
+
+
+
+
+
+
+
+
+    SAMPLERATE_DESCRIP="Audio sampling rate converter"
+    SAMPLERATE_OPTION="samplerate"
+    PBX_SAMPLERATE=0
+
+# Check whether --with-samplerate was given.
+if test ${with_samplerate+y}
+then :
+  withval=$with_samplerate;
+	case ${withval} in
+	n|no)
+	USE_SAMPLERATE=no
+	# -1 is a magic value used by menuselect to know that the package
+	# was disabled, other than 'not found'
+	PBX_SAMPLERATE=-1
+	;;
+	y|ye|yes)
+	ac_mandatory_list="${ac_mandatory_list} SAMPLERATE"
+	;;
+	*)
+	SAMPLERATE_DIR="${withval}"
+	ac_mandatory_list="${ac_mandatory_list} SAMPLERATE"
 	;;
 	esac
 
@@ -45360,6 +45438,200 @@ fi
          PBX_BCG729=1
          cat >>confdefs.h <<_ACEOF
 #define HAVE_BCG729 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_ESPEAK}" != "x1" -a "${USE_ESPEAK}" != "no"; then
+   pbxlibdir=""
+   # if --with-ESPEAK=DIR has been specified, use it.
+   if test "x${ESPEAK_DIR}" != "x"; then
+      if test -d ${ESPEAK_DIR}/lib; then
+         pbxlibdir="-L${ESPEAK_DIR}/lib"
+      else
+         pbxlibdir="-L${ESPEAK_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for espeak_ng_Initialize in -lespeak-ng" >&5
+printf %s "checking for espeak_ng_Initialize in -lespeak-ng... " >&6; }
+if test ${ac_cv_lib_espeak_ng_espeak_ng_Initialize+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lespeak-ng ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char espeak_ng_Initialize ();
+int
+main (void)
+{
+return espeak_ng_Initialize ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_espeak_ng_espeak_ng_Initialize=yes
+else $as_nop
+  ac_cv_lib_espeak_ng_espeak_ng_Initialize=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_espeak_ng_espeak_ng_Initialize" >&5
+printf "%s\n" "$ac_cv_lib_espeak_ng_espeak_ng_Initialize" >&6; }
+if test "x$ac_cv_lib_espeak_ng_espeak_ng_Initialize" = xyes
+then :
+  AST_ESPEAK_FOUND=yes
+else $as_nop
+  AST_ESPEAK_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_ESPEAK_FOUND}" = "yes"; then
+      ESPEAK_LIB="${pbxlibdir} -lespeak-ng "
+      # if --with-ESPEAK=DIR has been specified, use it.
+      if test "x${ESPEAK_DIR}" != "x"; then
+         ESPEAK_INCLUDE="-I${ESPEAK_DIR}/include"
+      fi
+      ESPEAK_INCLUDE="${ESPEAK_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${ESPEAK_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "espeak-ng/espeak_ng.h" "ac_cv_header_espeak_ng_espeak_ng_h" "$ac_includes_default"
+if test "x$ac_cv_header_espeak_ng_espeak_ng_h" = xyes
+then :
+  ESPEAK_HEADER_FOUND=1
+else $as_nop
+  ESPEAK_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${ESPEAK_HEADER_FOUND}" = "x0" ; then
+         ESPEAK_LIB=""
+         ESPEAK_INCLUDE=""
+      else
+
+         PBX_ESPEAK=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_ESPEAK 1
+_ACEOF
+
+      fi
+   fi
+fi
+
+
+
+
+if test "x${PBX_SAMPLERATE}" != "x1" -a "${USE_SAMPLERATE}" != "no"; then
+   pbxlibdir=""
+   # if --with-SAMPLERATE=DIR has been specified, use it.
+   if test "x${SAMPLERATE_DIR}" != "x"; then
+      if test -d ${SAMPLERATE_DIR}/lib; then
+         pbxlibdir="-L${SAMPLERATE_DIR}/lib"
+      else
+         pbxlibdir="-L${SAMPLERATE_DIR}"
+      fi
+   fi
+
+      ast_ext_lib_check_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${CFLAGS} "
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for src_new in -lsamplerate" >&5
+printf %s "checking for src_new in -lsamplerate... " >&6; }
+if test ${ac_cv_lib_samplerate_src_new+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsamplerate ${pbxlibdir}  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char src_new ();
+int
+main (void)
+{
+return src_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_samplerate_src_new=yes
+else $as_nop
+  ac_cv_lib_samplerate_src_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_samplerate_src_new" >&5
+printf "%s\n" "$ac_cv_lib_samplerate_src_new" >&6; }
+if test "x$ac_cv_lib_samplerate_src_new" = xyes
+then :
+  AST_SAMPLERATE_FOUND=yes
+else $as_nop
+  AST_SAMPLERATE_FOUND=no
+fi
+
+      CFLAGS="${ast_ext_lib_check_save_CFLAGS}"
+
+
+   # now check for the header.
+   if test "${AST_SAMPLERATE_FOUND}" = "yes"; then
+      SAMPLERATE_LIB="${pbxlibdir} -lsamplerate "
+      # if --with-SAMPLERATE=DIR has been specified, use it.
+      if test "x${SAMPLERATE_DIR}" != "x"; then
+         SAMPLERATE_INCLUDE="-I${SAMPLERATE_DIR}/include"
+      fi
+      SAMPLERATE_INCLUDE="${SAMPLERATE_INCLUDE} "
+
+         # check for the header
+         ast_ext_lib_check_saved_CPPFLAGS="${CPPFLAGS}"
+         CPPFLAGS="${CPPFLAGS} ${SAMPLERATE_INCLUDE}"
+         ac_fn_c_check_header_compile "$LINENO" "samplerate.h" "ac_cv_header_samplerate_h" "$ac_includes_default"
+if test "x$ac_cv_header_samplerate_h" = xyes
+then :
+  SAMPLERATE_HEADER_FOUND=1
+else $as_nop
+  SAMPLERATE_HEADER_FOUND=0
+fi
+
+         CPPFLAGS="${ast_ext_lib_check_saved_CPPFLAGS}"
+
+      if test "x${SAMPLERATE_HEADER_FOUND}" = "x0" ; then
+         SAMPLERATE_LIB=""
+         SAMPLERATE_INCLUDE=""
+      else
+
+         PBX_SAMPLERATE=1
+         cat >>confdefs.h <<_ACEOF
+#define HAVE_SAMPLERATE 1
 _ACEOF
 
       fi

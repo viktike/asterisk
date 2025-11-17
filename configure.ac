@@ -561,6 +561,8 @@ AST_EXT_LIB_SETUP([BFD], [Debug symbol decoding], [bfd])
 AST_EXT_LIB_SETUP([ZMQ], [Zero Message Queue], [zmq])
 AST_EXT_LIB_SETUP([CONSUL], [Hashicorp Consul broker service discovery], [consul])
 AST_EXT_LIB_SETUP([BCG729], [BelledonneCommunications G.729 (Linphone)], [bcg729])
+AST_EXT_LIB_SETUP([ESPEAK], [eSpeak next-generation], [espeak-ng])
+AST_EXT_LIB_SETUP([SAMPLERATE], [Audio sampling rate converter], [samplerate])
 
 # BKTR is used for backtrace support on platforms that do not
 # have it natively.
@@ -2695,6 +2697,10 @@ AST_EXT_LIB_CHECK([KAFKA], [rdkafka], [rd_kafka_version], [librdkafka/rdkafka.h]
 AST_EXT_LIB_CHECK([EVS], [3gpp-evs], [evs_enc], [3gpp-evs/prot.h])
 
 AST_EXT_LIB_CHECK([BCG729], [bcg729], [bcg729Encoder], [bcg729/encoder.h])
+
+AST_EXT_LIB_CHECK([ESPEAK], [espeak-ng], [espeak_ng_Initialize], [espeak-ng/espeak_ng.h])
+
+AST_EXT_LIB_CHECK([SAMPLERATE], [samplerate], [src_new], [samplerate.h])
 
 # opusfile.h includes <opus_multistream.h> so we need to make sure that
 # either $OPUS_INCLUDE or /usr/include/opus is added to the search path.
