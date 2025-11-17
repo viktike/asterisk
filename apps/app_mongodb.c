@@ -65,6 +65,11 @@
 		</syntax>
 		<description>
 			<para>Pushes a JSON document to a collection in a Mongo database coverted to BSON (binary JSON)</para>
+         <variablelist>
+				<variable name="MONGO_INSERTED_ID">
+					<para>The _id of the inserted document.</para>
+				</variable>
+			</variablelist>
 		</description>
 	</application>
  ***/
@@ -122,7 +127,9 @@ static int push_exec(struct ast_channel *chan, const char *data)
 
    bson_oid_t *mongo_server_id = NULL;
    bson_t *doc = NULL;
+   bson_t reply;
    bson_error_t parse_error, insert_error;
+   bson_iter_t iter;
    mongoc_collection_t *mongo_collection = NULL;
    mongoc_uri_t *mongo_uri = NULL;
    mongoc_client_t *mongo_client = NULL;
@@ -298,9 +305,18 @@ static int push_exec(struct ast_channel *chan, const char *data)
             if(serverid){
                BSON_APPEND_OID(doc, SERVERID, mongo_server_id);
             }
-            if(!mongoc_collection_insert(mongo_collection, MONGOC_INSERT_NONE, doc, NULL, &insert_error)){
+            if(!mongoc_collection_insert_one(mongo_collection, doc, NULL, &reply, &insert_error)){
                ast_log(LOG_ERROR, "insertion failed: %s\n", insert_error.message);
                res = -1;
+            } else {
+               if(bson_iter_init_find(&iter, &reply, "insertedId")){
+                  const bson_value_t *id = bson_iter_value(&iter);
+                  // id->value.v_oid is the ObjectId
+                  char str[25];
+                  bson_oid_to_string(&id->value.v_oid, str);
+                  ast_log(LOG_NOTICE, "Inserted document _id: %s\n", str);
+                  pbx_builtin_setvar_helper(chan, "MONGO_INSERTED_ID", str);
+               }
             }
             bson_destroy(doc);
          }
@@ -326,18 +342,78 @@ static int push_exec(struct ast_channel *chan, const char *data)
 	}
 }
 
+
+/*
+PARAMETER LIST
+
+Get:
+MONGO(connection_from_config_only,document_id[,field])
+
+uses mongoc_fin
+if(field is empty){
+   return JSON
+} else {
+   return just that field
+}
+
+Put:
+MONGO(connection_from_config_only,document_id[,field])
+
+if(value is empty){
+
+   if(field is empty){
+      // Delete document from collection by id
+      mongoc_collection_delete_one()
+   } else {
+      // Unset field from document by id
+      mongoc_collection_update_one()
+   }
+} else {
+   if(field is empty){
+      // Create a new document in collection with a predefined id
+      mongoc_collection_insert_one()
+   } else {
+      // Update a field in document by id with value
+      mongoc_collection_update_one()
+   }
+}
+*/
+
+static int get_exec(struct ast_channel *chan, const char *cmd, char *parse, char *buffer, size_t buflen)
+{
+   // TODO
+   return 0;
+}
+static int put_exec(struct ast_channel *chan, const char *cmd, char *parse, const char *value)
+{
+   // TODO
+   return 0;
+}
+
+static struct ast_custom_function mongo = {
+	.name = "MONGO",
+	.read = get_exec,
+   .write = put_exec,
+};
+
 static int load_module(void)
 {
-	int res;
+	int res = 0;
 	
-	res = ast_register_application_xml(app, push_exec);
+	res |= ast_register_application_xml(app, push_exec);
+   res |= ast_custom_function_register(&mongo);
 
 	return res ? AST_MODULE_LOAD_FAILURE : AST_MODULE_LOAD_SUCCESS;
 }
 
 static int unload_module(void)
 {
-	return ast_unregister_application(app);
+   int res = 0;
+
+	res |= ast_unregister_application(app);
+   res |= ast_custom_function_unregister(&mongo);
+
+	return res;
 }
 
 static int reload_module(void)
