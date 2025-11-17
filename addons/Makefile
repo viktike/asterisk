@@ -34,6 +34,7 @@ ALL_C_MODS:=chan_mobile \
             format_lame \
             res_config_mysql \
             func_redis \
+	    func_dns \
             res_json \
 	    res_memcached \
 	    app_memcache \
