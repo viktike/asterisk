@@ -554,6 +554,7 @@ AST_EXT_LIB_SETUP([IPP], [Intel(R) Integrated Performance Primitives Speech Codi
 AST_EXT_LIB_SETUP([FLITE], [A small fast portable speech synthesis system], [flite])
 AST_EXT_LIB_SETUP([KAFKA], [Kafka messaging], [rdkafka])
 AST_EXT_LIB_SETUP([ALSA], [Advanced Linux Sound Architecture], [asound])
+AST_EXT_LIB_SETUP([WEBSOCKETS], [Websocket client library], [websockets])
 AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [opencore-amrnb])
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
 AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
@@ -1681,6 +1682,7 @@ fi
 # do the package library checks now
 
 AST_EXT_LIB_CHECK([ALSA], [asound], [snd_pcm_open], [alsa/asoundlib.h])
+AST_EXT_LIB_CHECK([WEBSOCKETS], [websockets], [connect], [libwebsockets.h])
 
 AST_EXT_LIB_CHECK([LAME], [mp3lame], [get_lame_version], [lame/lame.h])
 AST_EXT_LIB_CHECK([BFD], [bfd], [bfd_openr], [bfd.h])

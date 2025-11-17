@@ -1,0 +1,251 @@
+# ============================================================================
+# ElevenLabs WebSocket Streaming API - Configuration Examples
+# Real-time Text-to-Speech with WebSocket streaming input
+# ============================================================================
+
+# Set your API key as environment variable or in each call
+# export ELEVENLABS_API_KEY="your_api_key_here"
+
+[elevenlabs-wss-examples]
+
+# ============================================================================
+# BASIC WEBSOCKET STREAMING EXAMPLES
+# ============================================================================
+
+# Simple WebSocket TTS
+exten => 1001,1,Answer()
+exten => 1001,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=Hello World from ElevenLabs WebSocket streaming!)
+exten => 1001,3,Hangup()
+
+# Using different voice (Adam)
+exten => 1002,1,Answer()
+exten => 1002,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=pNInz6obpgDQGcFmaJgB,text=This is Adam speaking through WebSocket streaming.)
+exten => 1002,3,Hangup()
+
+# Using different voice (Bella)
+exten => 1003,1,Answer()
+exten => 1003,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=EXAVITQu4vr4xnSDxMaL,text=Hi, this is Bella using the streaming API.)
+exten => 1003,3,Hangup()
+
+# ============================================================================
+# VOICE SETTINGS AND QUALITY
+# ============================================================================
+
+# High stability for consistent delivery
+exten => 1101,1,Answer()
+exten => 1101,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,stability=0.9,text=This voice has high stability for consistent delivery.)
+exten => 1101,3,Hangup()
+
+# Low stability for expressive speech
+exten => 1102,1,Answer()
+exten => 1102,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,stability=0.2,similarity=0.9,text=This is more expressive with low stability!)
+exten => 1102,3,Hangup()
+
+# Custom speed settings
+exten => 1103,1,Answer()
+exten => 1103,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,speed=1.2,text=This speech is slightly faster than normal.)
+exten => 1103,3,Hangup()
+
+exten => 1104,1,Answer()
+exten => 1104,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,speed=0.8,text=This speech is slower and more deliberate.)
+exten => 1104,3,Hangup()
+
+# ============================================================================
+# STREAMING AND CHUNKING FEATURES
+# ============================================================================
+
+# Stream text in chunks (sentence by sentence)
+exten => 1201,1,Answer()
+exten => 1201,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,stream_chunks=true,text=This is the first sentence. This is the second sentence. And this is the final sentence.)
+exten => 1201,3,Hangup()
+
+# Auto mode for reduced latency
+exten => 1202,1,Answer()
+exten => 1202,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,auto_mode=true,text=This uses auto mode for the lowest possible latency.)
+exten => 1202,3,Hangup()
+
+# Reading text from file
+exten => 1203,1,Answer()
+exten => 1203,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text_file=/tmp/speech.txt)
+exten => 1203,3,Hangup()
+
+# ============================================================================
+# SSML (Speech Synthesis Markup Language) EXAMPLES
+# ============================================================================
+
+# Basic SSML with emphasis
+exten => 1301,1,Answer()
+exten => 1301,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,enable_ssml=true,text=<speak>Hello! This is <emphasis level="strong">very important</emphasis> information.</speak>)
+exten => 1301,3,Hangup()
+
+# SSML with breaks and prosody
+exten => 1302,1,Answer()
+exten => 1302,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,enable_ssml=true,text=<speak>Welcome to our service. <break time="1s"/> Please hold while we connect you.</speak>)
+exten => 1302,3,Hangup()
+
+# ============================================================================
+# ADVANCED FEATURES AND OPTIONS
+# ============================================================================
+
+# Deterministic generation with seed
+exten => 1401,1,Answer()
+exten => 1401,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,seed=12345,text=This will always generate the same audio with the same seed.)
+exten => 1401,3,Hangup()
+
+# Sync alignment for word timing
+exten => 1402,1,Answer()
+exten => 1402,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,sync_alignment=true,text=This provides word-to-audio timing information.)
+exten => 1402,3,Hangup()
+
+# Different output formats
+exten => 1403,1,Answer()
+exten => 1403,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,output_format=mp3_44100_128,text=This uses high quality 44.1kHz MP3 format.)
+exten => 1403,3,Hangup()
+
+# ============================================================================
+# MULTILINGUAL EXAMPLES (with multilingual models)
+# ============================================================================
+
+# Spanish with multilingual model
+exten => 1501,1,Answer()
+exten => 1501,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,model=eleven_multilingual_v2,language=es,text=Hola, bienvenido a nuestro servicio de streaming.)
+exten => 1501,3,Hangup()
+
+# French with multilingual model
+exten => 1502,1,Answer()
+exten => 1502,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,model=eleven_multilingual_v2,language=fr,text=Bonjour, bienvenue dans notre service de streaming.)
+exten => 1502,3,Hangup()
+
+# German with multilingual model
+exten => 1503,1,Answer()
+exten => 1503,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,model=eleven_multilingual_v2,language=de,text=Hallo, willkommen bei unserem Streaming-Service.)
+exten => 1503,3,Hangup()
+
+# ============================================================================
+# PERFORMANCE OPTIMIZED EXAMPLES
+# ============================================================================
+
+# Turbo v2.5 model for fastest generation
+exten => 1601,1,Answer()
+exten => 1601,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,model=eleven_turbo_v2_5,auto_mode=true,text=This uses the fastest model with auto mode for minimal latency.)
+exten => 1601,3,Hangup()
+
+# Flash v2.5 model optimized for real-time
+exten => 1602,1,Answer()
+exten => 1602,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,model=eleven_flash_v2_5,stream_chunks=true,auto_mode=true,text=Flash model with streaming for real-time applications.)
+exten => 1602,3,Hangup()
+
+# ============================================================================
+# PRACTICAL IVR EXAMPLES
+# ============================================================================
+
+# Welcome message with chunked streaming
+exten => 2001,1,Answer()
+exten => 2001,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,stream_chunks=true,auto_mode=true,text=Welcome to TechCorp customer service. Your call is important to us. Please listen carefully as our menu options have changed.)
+exten => 2001,3,WaitForSilence(2000,1)
+exten => 2001,4,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=For sales, press 1. For technical support, press 2. For billing, press 3.)
+exten => 2001,5,Read(choice,beep,1)
+exten => 2001,6,Goto(process-choice,${choice},1)
+
+# Voice menu with SSML
+exten => 2002,1,Answer()
+exten => 2002,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,enable_ssml=true,text=<speak>Thank you for calling. <break time="500ms"/> Press <emphasis level="strong">one</emphasis> for English, or <emphasis level="strong">dos</emphasis> for Spanish.</speak>)
+exten => 2002,3,Read(language,beep,1)
+exten => 2002,4,Hangup()
+
+# Hold message with streaming
+exten => 2003,1,Answer()
+exten => 2003,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=EXAVITQu4vr4xnSDxMaL,stream_chunks=true,text=Please hold while we connect you to the next available representative. Your estimated wait time is less than two minutes.)
+exten => 2003,3,MusicOnHold(default,120)
+exten => 2003,4,Hangup()
+
+# ============================================================================
+# DYNAMIC TEXT EXAMPLES
+# ============================================================================
+
+# Using channel variables
+exten => 2101,1,Answer()
+exten => 2101,2,Set(CALLER_NAME=${CALLERID(name)})
+exten => 2101,3,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=Hello ${CALLER_NAME}, thank you for calling our automated system.)
+exten => 2101,4,Hangup()
+
+# Time-based greeting
+exten => 2102,1,Answer()
+exten => 2102,2,Set(CURRENT_TIME=${STRFTIME(,,%H)})
+exten => 2102,3,GotoIf($["${CURRENT_TIME}" < "12"]?morning:afternoon)
+exten => 2102,4(morning):ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=Good morning! How can we help you today?)
+exten => 2102,5(morning):Hangup()
+exten => 2102,6(afternoon):ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=Good afternoon! How can we assist you?)
+exten => 2102,7(afternoon):Hangup()
+
+# ============================================================================
+# ERROR HANDLING AND FALLBACKS
+# ============================================================================
+
+# TTS with fallback to Playback
+exten => 2201,1,Answer()
+exten => 2201,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=This is generated speech.)
+exten => 2201,3,GotoIf($["${ELEVENLABSSTATUS}" = "SUCCESS"]?success:fallback)
+exten => 2201,4(success):Hangup()
+exten => 2201,5(fallback):Playback(demo-thanks)
+exten => 2201,6(fallback):Hangup()
+
+# ============================================================================
+# TESTING AND DEVELOPMENT
+# ============================================================================
+
+# Test different voices quickly
+exten => 9001,1,Answer()
+exten => 9001,2,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,text=This is Rachel speaking.)
+exten => 9001,3,Wait(1)
+exten => 9001,4,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=pNInz6obpgDQGcFmaJgB,text=This is Adam speaking.)
+exten => 9001,5,Wait(1)
+exten => 9001,6,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=EXAVITQu4vr4xnSDxMaL,text=This is Bella speaking.)
+exten => 9001,7,Hangup()
+
+# Performance test with timing
+exten => 9002,1,Answer()
+exten => 9002,2,Set(START_TIME=${EPOCH})
+exten => 9002,3,ElevenLabsWSS(api_key=${ELEVENLABS_API_KEY},voice=21m00Tcm4TlvDq8ikWAM,auto_mode=true,text=Performance test message for measuring latency.)
+exten => 9002,4,Set(END_TIME=${EPOCH})
+exten => 9002,5,Set(DURATION=$[${END_TIME} - ${START_TIME}])
+exten => 9002,6,NoOp(Generation took ${DURATION} seconds)
+exten => 9002,7,Hangup()
+
+# ============================================================================
+# VOICE CONFIGURATION REFERENCE
+# ============================================================================
+
+# Popular ElevenLabs voices:
+# Rachel (Female, English):     21m00Tcm4TlvDq8ikWAM
+# Adam (Male, English):         pNInz6obpgDQGcFmaJgB  
+# Bella (Female, English):      EXAVITQu4vr4xnSDxMaL
+# Antoni (Male, English):       ErXwobaYiN019PkySvjV
+# Elli (Female, English):       MF3mGyEYCl7XYWbV9V6O
+# Josh (Male, English):         TxGEqnHWrfWFTfGW9XjX
+# Arnold (Male, English):       VR6AewLTigWG4xSOukaG
+# Sam (Male, English):          yoZ06aMxZJJ28mfd3POQ
+
+# Models available:
+# eleven_monolingual_v1         - High quality, English only
+# eleven_multilingual_v1        - Good quality, multiple languages  
+# eleven_multilingual_v2        - Best quality, multiple languages
+# eleven_turbo_v2               - Fast generation, good quality
+# eleven_turbo_v2_5             - Fastest generation
+# eleven_flash_v2_5             - Optimized for real-time streaming
+
+# Output formats:
+# mp3_22050_32                  - Default, good quality
+# mp3_44100_64                  - Higher quality
+# mp3_44100_128                 - High quality
+# mp3_44100_192                 - Very high quality
+# pcm_16000                     - Raw PCM, 16kHz
+# pcm_22050                     - Raw PCM, 22kHz
+# pcm_24000                     - Raw PCM, 24kHz
+# pcm_44100                     - Raw PCM, 44kHz
+
+# Language codes (for multilingual models):
+# en - English       es - Spanish       fr - French
+# de - German        it - Italian       pt - Portuguese  
+# hi - Hindi         ar - Arabic        zh - Chinese
+# ja - Japanese      ko - Korean        pl - Polish
