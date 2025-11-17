@@ -42,9 +42,12 @@ ALL_C_MODS:=chan_mobile \
 	    app_pgsql \
 	    app_mysql \
 	    cdr_mysql \
-	    cel_mysql 
+	    cel_mysql \
+            app_my    
 
 res_json.so: cJSON.o res_json.o
+
+$(call MOD_ADD_C,app_my,$(wildcard my/*.c))
 
 all: check_mp3 _all
 
