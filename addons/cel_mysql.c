@@ -356,6 +356,8 @@ db_reconnect:
 					value = record.user_field;
 				} else if (strcmp(cur->name, "peer") == 0) {
 					value = record.peer;
+				} else if (strcmp(cur->name, "extra") == 0) {
+					value = record.extra;
 				} else {
 					value = NULL;
 				}
