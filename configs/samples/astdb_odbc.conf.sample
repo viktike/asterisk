@@ -1,0 +1,3 @@
+[general]
+dsn = myodbcdns
+table = astdb

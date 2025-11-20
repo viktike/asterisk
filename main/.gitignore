@@ -4,3 +4,4 @@ libasteriskssl.dylib
 libasteriskpj.so.2
 libasteriskpj.dylib
 version.c
+db.c

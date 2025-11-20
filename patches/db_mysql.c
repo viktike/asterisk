@@ -134,6 +134,7 @@ char dbport[MAX_DB_FIELD];
 char dbcharset[128];
 char dbhost[MAX_DB_FIELD];
 char dbtable[MAX_DB_FIELD];
+char dbsock[MAX_DB_FIELD];
 
 MYSQL *mysql;
 
@@ -164,10 +165,9 @@ static int db_open(void)
 	if (sscanf(dbport, "%u", &port) != 1) {
 		ast_log(LOG_WARNING, "Invalid AstDB port: '%s'\n", dbport);
 		port = 0;
-		return -1;
 	}
-	if(!mysql_real_connect(mysql, dbhost, dbuser, dbpass, dbname, port, NULL, 0 )){
-		ast_log(LOG_WARNING, "AstDB mysql_real_connect(mysql,%s,%s,dbpass,%s,...) failed(%d): %s\n", dbhost, dbuser, dbname, mysql_errno(mysql), mysql_error(mysql));
+	if(!mysql_real_connect(mysql, dbhost, dbuser, dbpass, dbname, port, dbsock, 0 )){
+		ast_log(LOG_ERROR, "AstDB mysql_real_connect(mysql,%s,%s,dbpass,%s,...) failed(%d): %s\n", dbhost, dbuser, dbname, mysql_errno(mysql), mysql_error(mysql));
 		return -1;
 	} else {
 		// mysql_autocommit(mysql, 1);
@@ -192,6 +192,9 @@ static int load_config(void)
 		if (!strcasecmp(var->name, "dbhost")) {
 			ast_copy_string(dbhost, var->value, sizeof(dbhost));
 			ast_log(LOG_WARNING, "Found AstDB dbhost in config: %s\n", dbhost);
+                } else if(!strcasecmp(var->name, "dbsock")){
+                        ast_copy_string(dbsock, var->value, sizeof(dbsock));
+                        ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", dbsock);
 		} else if(!strcasecmp(var->name, "dbname")){
 			ast_copy_string(dbname, var->value, sizeof(dbname));
 			ast_log(LOG_WARNING, "Found AstDB dbname in config: %s\n", dbname);
@@ -214,6 +217,7 @@ static int load_config(void)
 			ast_log(LOG_WARNING, "Found unknown variable in astdb_mysql.conf general section: %s = %s\n", var->name, var->value);
 		}
 	}
+	ast_config_destroy(cfg);
 
 	return 0;
 }
@@ -297,7 +301,7 @@ int ast_db_put(const char *family, const char *key, const char *value)
 static int db_get_common(const char *family, const char *key, char **buffer, int bufferlen)
 {
 	char fullkey[MAX_DB_FIELD];
-	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
+	struct ast_str *sql = ast_str_create(MAX_DB_VAL * 2);
 	MYSQL_RES *mysqlres;
 	MYSQL_ROW row;
 
@@ -507,6 +511,8 @@ int ast_db_exists(const char *family, const char *key)
         char fullkey[MAX_DB_FIELD];
         struct ast_str *sql = ast_str_create(MAX_DB_VAL);
         MYSQL_RES *mysqlres;
+	MYSQL_ROW row;
+	unsigned int rows = 0;
 
         if (strlen(family) + strlen(key) + 2 > sizeof(fullkey) - 1) {
                 ast_log(LOG_WARNING, "Family and key length must be less than %zu bytes\n", sizeof(fullkey) - 3);
@@ -515,14 +521,16 @@ int ast_db_exists(const char *family, const char *key)
 
         snprintf(fullkey, sizeof(fullkey), "/%s/%s", family, key);
 
-        ast_str_append(&sql, 0, "SELECT CAST(COUNT(`value`) AS UNSIGNED) FROM %s WHERE `key`='%s';", table, fullkey);
+        ast_str_append(&sql, 0, "SELECT CAST(COUNT(`value`) AS UNSIGNED) FROM %s WHERE `key`='%s';", dbtable, fullkey);
         
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
         if(mysqlres != NULL){
                 if((row = mysql_fetch_row(mysqlres)) != NULL){
-                        unsigned int exists = row[0];
-                        mysql_free_result(mysqlres);
-                        return exists;
+			mysql_free_result(mysqlres);
+        		if (sscanf(row[0], "%u", &rows) != 1) {
+	                	rows = 0;
+		        }
+                        return rows;
                 } else {
                         mysql_free_result(mysqlres);
                         return -1;

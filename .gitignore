@@ -47,4 +47,3 @@ tests/CI/output
 *.swp
 *.swo
 
-main/db.c

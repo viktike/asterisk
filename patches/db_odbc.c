@@ -183,6 +183,7 @@ static int load_config(void)
 			ast_log(LOG_WARNING, "Found unknown variable in " CONFIG " general section: %s = %s\n", var->name, var->value);
 		}
 	}
+	ast_config_destroy(cfg);
 	return 0;
 }
 /* Query type statements that will produce a result-set */

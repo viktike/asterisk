@@ -1,0 +1,9 @@
+[general]
+dbname = asterisk_realtime
+dbuser = asterisk_conf
+dbpass = SuperSecretPassword
+dbcharset = utf8
+;dbsock = /var/lib/mysql/mysql.sock
+dbhost = 127.0.0.1
+dbport = 3306
+dbtable = astdb
