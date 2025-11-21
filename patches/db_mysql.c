@@ -126,15 +126,15 @@
 #define	CONFIG	"astdb_mysql.conf"
 #define MAX_DB_FIELD 256
 #define MAX_DB_VAL 4096
-char dbhost[MAX_DB_FIELD];
 char dbname[MAX_DB_FIELD];
 char dbuser[MAX_DB_FIELD];
 char dbpass[MAX_DB_FIELD];
 char dbport[MAX_DB_FIELD];
 char dbcharset[128];
-char dbhost[MAX_DB_FIELD];
 char dbtable[MAX_DB_FIELD];
-char dbsock[MAX_DB_FIELD];
+
+static struct ast_str *dbhost = NULL;
+static struct ast_str *dbsock = NULL;
 
 MYSQL *mysql;
 
@@ -166,8 +166,8 @@ static int db_open(void)
 		ast_log(LOG_WARNING, "Invalid AstDB port: '%s'\n", dbport);
 		port = 0;
 	}
-	if(!mysql_real_connect(mysql, dbhost, dbuser, dbpass, dbname, port, dbsock, 0 )){
-		ast_log(LOG_ERROR, "AstDB mysql_real_connect(mysql,%s,%s,dbpass,%s,...) failed(%d): %s\n", dbhost, dbuser, dbname, mysql_errno(mysql), mysql_error(mysql));
+	if(!mysql_real_connect(mysql, ast_str_strlen(dbhost) ? ast_str_buffer(dbhost) : NULL, dbuser, dbpass, dbname, port, ast_str_strlen(dbsock) ? ast_str_buffer(dbsock) : NULL, 0 )){
+		ast_log(LOG_ERROR, "AstDB mysql_real_connect(mysql,%s,dbpass,%s,...) failed(%d): %s\n", dbuser, dbname, mysql_errno(mysql), mysql_error(mysql));
 		return -1;
 	} else {
 		// mysql_autocommit(mysql, 1);
@@ -187,14 +187,17 @@ static int load_config(void)
 		return -1;
 	}
 
+	dbhost = ast_str_create(MAX_DB_FIELD);
+	dbsock = ast_str_create(MAX_DB_FIELD);
+
 	/* Process the general category */
 	for (var = ast_variable_browse(cfg, "general"); var; var = var->next) {
 		if (!strcasecmp(var->name, "dbhost")) {
-			ast_copy_string(dbhost, var->value, sizeof(dbhost));
-			ast_log(LOG_WARNING, "Found AstDB dbhost in config: %s\n", dbhost);
+			ast_str_set(&dbhost, 0, "%s", var->value);
+			ast_log(LOG_WARNING, "Found AstDB dbhost in config: %s\n", ast_str_buffer(dbhost));
                 } else if(!strcasecmp(var->name, "dbsock")){
-                        ast_copy_string(dbsock, var->value, sizeof(dbsock));
-                        ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", dbsock);
+			ast_str_set(&dbsock, 0, "%s", var->value);
+                        ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", ast_str_buffer(dbsock));
 		} else if(!strcasecmp(var->name, "dbname")){
 			ast_copy_string(dbname, var->value, sizeof(dbname));
 			ast_log(LOG_WARNING, "Found AstDB dbname in config: %s\n", dbname);
@@ -1031,6 +1034,9 @@ static void astdb_atexit(void)
 	ast_manager_unregister("DBDelTree");
 
 	mysql_close(mysql);
+
+	ast_free(dbhost);
+	ast_free(dbsock);
 }
 
 int astdb_init(void)
