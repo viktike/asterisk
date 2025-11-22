@@ -51,4 +51,4 @@ sudo ./contrib/scripts/install_prereq install
 #apt-get install libjemalloc2 libjemalloc2-dev libgoogle-perftools-dev
 #LDFLAGS="-L/lib/x86_64-linux-gnu -ltcmalloc -Wl,--no-as-needed" ./configure
 #LDFLAGS="-L/lib/x86_64-linux-gnu -ltcmalloc -Wl,--no-as-needed" make -j4 install
-#MALLOC_CONF="narenas:1" TCMALLOC_RELEASE_RATE="0.1" TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES="268435456 asterisk -cvvv
+#MALLOC_CONF="narenas:1" TCMALLOC_RELEASE_RATE=0.1 TCMALLOC_MAX_TOTAL_THREAD_CACHE_BYTES=268435456 asterisk -cvvv
