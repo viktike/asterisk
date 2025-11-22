@@ -103,7 +103,6 @@
 		<managerEventInstance class="EVENT_FLAG_SYSTEM">
 			<synopsis>Raised when are registred to consul.</synopsis>
 		<syntax>
-			<xi:include xpointer="xpointer(/docs/managerEvent[@name='DiscoveryRegister']/managerEventInstance/syntax/parameter)" />
 		</syntax>
 		<see-also>
 			<ref type="managerEvent">DiscoveryDeregister</ref>
@@ -114,7 +113,6 @@
 		<managerEventInstance class="EVENT_FLAG_SYSTEM">
 			<synopsis>Raised when are deregistred to consul.</synopsis>
 		<syntax>
-			<xi:include xpointer="xpointer(/docs/managerEvent[@name='DiscoveryDeregister']/managerEventInstance/syntax/parameter)" />
 		</syntax>
 		<see-also>
 			<ref type="managerEvent">DiscoveryDeregister</ref>
@@ -125,7 +123,6 @@
 		<managerEventInstance class="EVENT_FLAG_SYSTEM">
 			<synopsis>Raised when you set maintenance.</synopsis>
 		<syntax>
-			<xi:include xpointer="xpointer(/docs/managerEvent[@name='DiscoveryDeregister']/managerEventInstance/syntax/parameter)" />
 		</syntax>
 		</managerEventInstance>
 	</managerEvent>
