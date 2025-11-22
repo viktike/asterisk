@@ -115,7 +115,7 @@
 						<para>Custom metadata as key=value,key2=value2</para>
 					</option>
 					<option name="tags">
-						<para>Object tags as key=value&key2=value2</para>
+						<para>Object tags as key=value&amp;key2=value2</para>
 					</option>
 				</optionlist>
 			</parameter>
