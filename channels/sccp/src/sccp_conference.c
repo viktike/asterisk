@@ -24,8 +24,6 @@
 	<manager name="SCCPConference" language="en_US">
 		<synopsis>Control sccp conference and it's participants.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="ConferenceId" required="true">
 				<para>Id of the conference</para>
 			</parameter>

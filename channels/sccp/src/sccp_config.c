@@ -86,8 +86,6 @@
 	<manager name="SCCPConfigMetaData" language="en_US">
 		<synopsis>Retrieve config metadata in json format</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="segment" required="false">
 				<para>The name of the segment you are interest, leaving it empty will list the segments available.</para>
 				<enumlist>
@@ -165,8 +163,6 @@
 							<parameter name="Description">
 								<para>A detailed user description of the field.</para>
 							</parameter>
-							<xi:include href="../core-en_US.xml" parse="xml"
-								xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 						</syntax>
 						<description>
 							<para>Detailed field information for the requested segment.</para>
@@ -181,8 +177,6 @@
 				<managerEventInstance class="EVENT_FLAG_AGENT">
 					<synopsis>Final response event in a series of events to the Agents AMI action.</synopsis>
 					<syntax>
-						<xi:include href="../core-en_US.xml" parse="xml"
-							xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 					</syntax>
 					<see-also>
 						<ref type="manager">SCCPConfigMetaData</ref>

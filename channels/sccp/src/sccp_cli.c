@@ -74,8 +74,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPAnswerCall1" language="en_US">
 		<synopsis>Answer an inbound call on a device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="ChannelId" required="true">
 				<para>ChannelId of channel that is currently rining.</para>
 			</parameter>
@@ -97,8 +95,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPCallforward" language="en_US">
 		<synopsis>Set/Unset callforward on an sccp line.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="LineName" required="true">
 				<para><replaceable>LineId</replaceable> for which callforward should be set/removed.</para>
 			</parameter>
@@ -125,8 +121,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPDndDevice" language="en_US">
 		<synopsis>Set do not disturb status for a particular device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceId" required="true">
 				<para>DeviceId of the Device, for which to set Do Not Disturb.</para>
 			</parameter>
@@ -158,8 +152,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPSystemMessage" language="en_US">
 		<synopsis>Description: Set a system wide message for all devices.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="MessageText" required="true">
 				<para>The message to send to all devices.</para>
 			</parameter>
@@ -182,8 +174,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPTokenAck" language="en_US">
 		<synopsis>Send Token Acknowledge to speficic device</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceId" required="true">
 				<para><replaceable>DeviceId</replaceable> of the skinny device which should be pulled to this server.</para>
 			</parameter>

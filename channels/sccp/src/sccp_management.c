@@ -29,8 +29,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPAnswerCall" language="en_US">
 		<synopsis>Answer an inbound call on a device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceName" required="true">
 				<para>DeviceId of the device with the incoming/ringing call.</para>
 			</parameter>
@@ -54,8 +52,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPDeviceAddLine" language="en_US">
 		<synopsis>Add a existing line to an active device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceName" required="true">
 				<para>DeviceId to add a new line to.</para>
 			</parameter>
@@ -80,8 +76,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPDeviceRestart" language="en_US">
 		<synopsis>Send a restart message to a registered device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceName" required="true">
 				<para><replaceable>DeviceId</replaceable> of the device that should be restarted.</para>
 			</parameter>
@@ -113,8 +107,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPDeviceSetDND" language="en_US">
 		<synopsis>Set do not disturb status for a particular device.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="Devicename" required="true">
 				<para>DeviceId of the Device, for which to set Do Not Disturb.</para>
 			</parameter>
@@ -145,8 +137,6 @@ SCCP_FILE_VERSION(__FILE__, "");
 	<manager name="SCCPStartCall" language="en_US">
 		<synopsis>Description: start a new call on a device/line.</synopsis>
 		<syntax>
-			<xi:include href="../core-en_US.xml" parse="xml"
-				xpointer="xpointer(/docs/manager[@name='Login']/syntax/parameter[@name='ActionID'])"/>
 			<parameter name="DeviceId" required="true">
 				<para>Name of the <replaceable>DeviceId</replaceable> to use to make the new call.</para>
 			</parameter>
