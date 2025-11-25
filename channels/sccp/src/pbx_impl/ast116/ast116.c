@@ -3845,9 +3845,14 @@ static void unregister_channel_tech(struct ast_channel_tech *tech)
 static int unload_module(void)
 {
 	pbx_log(LOG_NOTICE, "SCCP: Module Unload\n");
+	
+	boolean_t preunload_called = FALSE;
 	if (sccp_globals && GLOB(module_running)) {
+		pbx_log(LOG_NOTICE, "SCCP: Running pre-unload cleanup\n");
 		sccp_preUnload();
+		preunload_called = TRUE;
 	}
+	
 	pbx_log(LOG_NOTICE, "SCCP: Unregister SCCP RTP protocol\n");
 	ast_rtp_glue_unregister(&sccp_rtp);
 	pbx_log(LOG_NOTICE, "SCCP: Unregister SCCP Channel Tech\n");
@@ -3870,25 +3875,45 @@ static int unload_module(void)
 		io = NULL;
 	}
 
-	while (SCCP_REF_DESTROYED != sccp_refcount_isRunning()) {
-		usleep(SCCP_TIME_TO_KEEP_REFCOUNTEDOBJECT);							// give enough time for all schedules to end and refcounted object to be cleanup completely
+	// Only wait for refcount if preUnload was not called (sccp_preUnload calls sccp_refcount_destroy internally)
+	if (!preunload_called && sccp_refcount_isRunning() != SCCP_REF_DESTROYED) {
+		pbx_log(LOG_NOTICE, "SCCP: Waiting for refcount cleanup\n");
+		int refcount_timeout_ms = 2000;  // 2 second timeout
+		int elapsed_ms = 0;
+		while (SCCP_REF_DESTROYED != sccp_refcount_isRunning() && elapsed_ms < refcount_timeout_ms) {
+			usleep(SCCP_TIME_TO_KEEP_REFCOUNTEDOBJECT);
+			elapsed_ms += SCCP_TIME_TO_KEEP_REFCOUNTEDOBJECT / 1000;
+		}
 	}
 
 	if (sched) {
-		pbx_log(LOG_NOTICE, "Cleaning up scheduled items:\n");
+		pbx_log(LOG_NOTICE, "SCCP: Cleaning up scheduled items\n");
 		int scheduled_items = 0;
+		int sched_timeout_ms = 2000;  // 2 second timeout
+		int sched_elapsed_ms = 0;
 
 		ast_sched_dump(sched);
-		while ((scheduled_items = ast_sched_runq(sched))) {
-			pbx_log(LOG_NOTICE, "Cleaning up %d scheduled items... please wait\n", scheduled_items);
-			usleep(ast_sched_wait(sched));
+		while ((scheduled_items = ast_sched_runq(sched)) && sched_elapsed_ms < sched_timeout_ms) {
+			int wait_ms = ast_sched_wait(sched);
+			if (wait_ms > 0 && wait_ms < 100) {  // cap individual sleep to 100ms to stay responsive
+				usleep(wait_ms);
+				sched_elapsed_ms += wait_ms / 1000;
+			} else if (wait_ms >= 100) {
+				usleep(100000);  // sleep 100ms instead of waiting longer
+				sched_elapsed_ms += 100;
+			} else {
+				break;
+			}
 		}
 		ast_sched_context_destroy(sched);
 		sched = NULL;
 	}
 
-	pbx_log(LOG_NOTICE, "Running Cleanup\n");
-	sccp_free(sccp_globals);
+	pbx_log(LOG_NOTICE, "SCCP: Running final cleanup\n");
+	if (sccp_globals) {
+		sccp_free(sccp_globals);
+		sccp_globals = NULL;
+	}
 	pbx_log(LOG_NOTICE, "Module chan_sccp unloaded\n");
 	if (pbx_module_info && pbx_module_info->self) {
 		pbx_module_unref(pbx_module_info->self);
