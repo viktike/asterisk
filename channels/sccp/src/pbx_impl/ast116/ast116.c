@@ -3845,10 +3845,12 @@ static void unregister_channel_tech(struct ast_channel_tech *tech)
 static int unload_module(void)
 {
 	pbx_log(LOG_NOTICE, "SCCP: Module Unload\n");
-	sccp_preUnload();
-	sccp_log((DEBUGCAT_CORE)) (VERBOSE_PREFIX_2 "SCCP: Unregister SCCP RTP protocol\n");
+	if (sccp_globals && GLOB(module_running)) {
+		sccp_preUnload();
+	}
+	pbx_log(LOG_NOTICE, "SCCP: Unregister SCCP RTP protocol\n");
 	ast_rtp_glue_unregister(&sccp_rtp);
-	sccp_log((DEBUGCAT_CORE)) (VERBOSE_PREFIX_2 "SCCP: Unregister SCCP Channel Tech\n");
+	pbx_log(LOG_NOTICE, "SCCP: Unregister SCCP Channel Tech\n");
 
 	unregister_channel_tech(&sccp_tech);
 	sccp_unregister_dialplan_functions();
@@ -3888,7 +3890,9 @@ static int unload_module(void)
 	pbx_log(LOG_NOTICE, "Running Cleanup\n");
 	sccp_free(sccp_globals);
 	pbx_log(LOG_NOTICE, "Module chan_sccp unloaded\n");
-	pbx_module_unref(pbx_module_info->self);
+	if (pbx_module_info && pbx_module_info->self) {
+		pbx_module_unref(pbx_module_info->self);
+	}
 	return 0;
 }
 
