@@ -285,7 +285,7 @@ static char *_create_event_DTMF_END(struct websocket_pvt *instance,
 		struct ast_json *msg = ast_json_pack("{s:s, s:s, s:s#}",
 			"event", "DTMF_END",
 			"channel_id", ast_channel_uniqueid(instance->channel),
-			"digit", digit, 1
+			"digit", &digit, 1
 			);
 		if (!msg) {
 			return NULL;
@@ -1099,10 +1099,14 @@ static int webchan_write(struct ast_channel *ast, struct ast_frame *f)
 		return -1;
 	}
 
+	if (f->frametype == AST_FRAME_CNG) {
+		return 0;
+	}
+
 	if (f->frametype != AST_FRAME_VOICE) {
 		ast_log(LOG_WARNING, "%s: This WebSocket channel only supports AST_FRAME_VOICE frames\n",
 			ast_channel_name(ast));
-		return -1;
+		return 0;
 	}
 
 	if (ast_format_cmp(f->subclass.format, instance->native_format) == AST_FORMAT_CMP_NOT_EQUAL) {
