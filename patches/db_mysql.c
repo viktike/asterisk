@@ -195,9 +195,9 @@ static int load_config(void)
 		if (!strcasecmp(var->name, "dbhost")) {
 			ast_str_set(&dbhost, 0, "%s", var->value);
 			ast_log(LOG_WARNING, "Found AstDB dbhost in config: %s\n", ast_str_buffer(dbhost));
-                } else if(!strcasecmp(var->name, "dbsock")){
+        } else if(!strcasecmp(var->name, "dbsock")){
 			ast_str_set(&dbsock, 0, "%s", var->value);
-                        ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", ast_str_buffer(dbsock));
+            ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", ast_str_buffer(dbsock));
 		} else if(!strcasecmp(var->name, "dbname")){
 			ast_copy_string(dbname, var->value, sizeof(dbname));
 			ast_log(LOG_WARNING, "Found AstDB dbname in config: %s\n", dbname);
@@ -254,9 +254,12 @@ static int db_execute_mysql(const char *sql)
 static int db_create_astdb(void)
 {
 	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
-	
+	int res;
     ast_str_append(&sql, 0, "CREATE TABLE IF NOT EXISTS %s (`key` VARCHAR(%d) NOT NULL, `value` VARCHAR(%d) NULL DEFAULT NULL, PRIMARY KEY (`key`));", dbtable, MAX_DB_FIELD, MAX_DB_VAL);
-	return db_execute_mysql(ast_str_buffer(sql));
+
+	res = db_execute_mysql(ast_str_buffer(sql));
+	ast_free(sql);
+	return res;
 }
 
 static int db_init(void)
@@ -277,12 +280,15 @@ int ast_db_put(const char *family, const char *key, const char *value)
 		ast_log(LOG_WARNING, "Family and key length must be less than %zu bytes\n", sizeof(fullkey) - 3);
 		return -1;
 	}
-        snprintf(fullkey, sizeof(fullkey), "/%s/%s", family, key);
-
-        ast_str_append(&sql, 0, "INSERT INTO %s (`key`, `value`) VALUES ('%s', '%s') ON DUPLICATE KEY UPDATE `value`='%s';", dbtable, fullkey, value, value);
+    
+	snprintf(fullkey, sizeof(fullkey), "/%s/%s", family, key);
+	ast_str_append(&sql, 0, "INSERT INTO %s (`key`, `value`) VALUES ('%s', '%s') ON DUPLICATE KEY UPDATE `value`='%s';", dbtable, fullkey, value, value);
+	
 	if(db_execute_mysql(ast_str_buffer(sql)) == -1){
+		ast_free(sql);
 		return -1;
 	} else {
+		ast_free(sql);
 		return 0;
 	}
 }
@@ -326,13 +332,16 @@ static int db_get_common(const char *family, const char *key, char **buffer, int
 				ast_copy_string(*buffer, value, bufferlen);
 			}
 			mysql_free_result(mysqlres);
+			ast_free(sql);
 			return 0;
 		} else {
 			mysql_free_result(mysqlres);
+			ast_free(sql);
 			return -1;
 		}
 	} else {
 		mysql_free_result(mysqlres);
+		ast_free(sql);
 		return -1;	
 	}
 }
@@ -368,8 +377,10 @@ int ast_db_del(const char *family, const char *key)
 
 	ast_str_append(&sql, 0, "DELETE FROM %s WHERE `key`='%s';", dbtable, fullkey);
 	if(db_execute_mysql(ast_str_buffer(sql)) == -1){
+		ast_free(sql);
 		return -1;
 	} else {
+		ast_free(sql);
 		return 0;
 	}
 }
@@ -378,8 +389,7 @@ int ast_db_del2(const char *family, const char *key)
 {
 	char fullkey[MAX_DB_FIELD];
 	char tmp[1];
-	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
-
+	
 	if (strlen(family) + strlen(key) + 2 > sizeof(fullkey) - 1) {
 		ast_log(LOG_WARNING, "Family and key length must be less than %zu bytes\n", sizeof(fullkey) - 3);
 		return -1;
@@ -391,8 +401,10 @@ int ast_db_del2(const char *family, const char *key)
 		ast_log(LOG_WARNING, "AstDB key %s does not exist\n", fullkey);
 		return -1;
 	} else {
+		struct ast_str *sql = ast_str_create(MAX_DB_VAL);
 		ast_str_append(&sql, 0, "DELETE FROM %s WHERE `key`='%s';", dbtable, fullkey);
 		db_execute_mysql(ast_str_buffer(sql));
+		ast_free(sql);
 		return 0;
 	}
 }
@@ -400,6 +412,7 @@ int ast_db_del2(const char *family, const char *key)
 int ast_db_deltree(const char *family, const char *keytree)
 {
 	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
+	int res;
 
 	if (!ast_strlen_zero(family)) {
 		if (!ast_strlen_zero(keytree)) {
@@ -414,7 +427,9 @@ int ast_db_deltree(const char *family, const char *keytree)
 		ast_str_append(&sql, 0, "TRUNCATE TABLE %s;", dbtable);
 	}
 
-	return db_execute_mysql(ast_str_buffer(sql));
+	res = db_execute_mysql(ast_str_buffer(sql));
+	ast_free(sql);
+	return res;
 }
 
 static struct ast_db_entry *db_gettree_common(MYSQL_RES *mysqlres)
@@ -478,6 +493,7 @@ struct ast_db_entry *ast_db_gettree(const char *family, const char *keytree)
 	}
 
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
+	ast_free(sql);
 	ret = db_gettree_common(mysqlres);
 	mysql_free_result(mysqlres);
 
@@ -493,6 +509,7 @@ struct ast_db_entry *ast_db_gettree_by_prefix(const char *family, const char *ke
 	ast_str_append(&sql, 0, "SELECT `key`, `value` FROM %s WHERE `key` LIKE '/%s/%s%%' ORDER BY `key`;", dbtable, family, key_prefix);
 
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
+	ast_free(sql);
 	ret = db_gettree_common(mysqlres);
 	mysql_free_result(mysqlres);
 
@@ -511,37 +528,38 @@ void ast_db_freetree(struct ast_db_entry *dbe)
 
 int ast_db_exists(const char *family, const char *key)
 {       
-        char fullkey[MAX_DB_FIELD];
-        struct ast_str *sql = ast_str_create(MAX_DB_VAL);
-        MYSQL_RES *mysqlres;
+	char fullkey[MAX_DB_FIELD];
+	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
+	MYSQL_RES *mysqlres;
 	MYSQL_ROW row;
 	unsigned int rows = 0;
 
-        if (strlen(family) + strlen(key) + 2 > sizeof(fullkey) - 1) {
-                ast_log(LOG_WARNING, "Family and key length must be less than %zu bytes\n", sizeof(fullkey) - 3);
-                return -1;
-        }
+	if (strlen(family) + strlen(key) + 2 > sizeof(fullkey) - 1) {
+			ast_log(LOG_WARNING, "Family and key length must be less than %zu bytes\n", sizeof(fullkey) - 3);
+			return -1;
+	}
 
-        snprintf(fullkey, sizeof(fullkey), "/%s/%s", family, key);
+	snprintf(fullkey, sizeof(fullkey), "/%s/%s", family, key);
 
-        ast_str_append(&sql, 0, "SELECT CAST(COUNT(`value`) AS UNSIGNED) FROM %s WHERE `key`='%s';", dbtable, fullkey);
+	ast_str_append(&sql, 0, "SELECT CAST(COUNT(`value`) AS UNSIGNED) FROM %s WHERE `key`='%s';", dbtable, fullkey);
         
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
-        if(mysqlres != NULL){
-                if((row = mysql_fetch_row(mysqlres)) != NULL){
+	ast_free(sql);
+	if(mysqlres != NULL){
+		if((row = mysql_fetch_row(mysqlres)) != NULL){
 			mysql_free_result(mysqlres);
-        		if (sscanf(row[0], "%u", &rows) != 1) {
-	                	rows = 0;
-		        }
-                        return rows;
-                } else {
-                        mysql_free_result(mysqlres);
-                        return -1;
-                }
-        } else {
-                mysql_free_result(mysqlres);
-                return -1;
-        }
+			if (sscanf(row[0], "%u", &rows) != 1) {
+				rows = 0;
+			}
+			return rows;
+		} else {
+			mysql_free_result(mysqlres);
+			return -1;
+		}
+	} else {
+		mysql_free_result(mysqlres);
+		return -1;
+	}
 }
 
 static char *handle_cli_database_exists(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
@@ -685,7 +703,7 @@ static char *handle_cli_database_deltree(struct ast_cli_entry *e, int cmd, struc
 	} else if (num_deleted == 0) {
 		ast_cli(a->fd, "Database entries do not exist.\n");
 	} else {
-		ast_cli(a->fd, "%d database entries removed.\n",num_deleted);
+		ast_cli(a->fd, "%d database entries removed.\n", num_deleted);
 	}
 	return CLI_SUCCESS;
 }
@@ -725,6 +743,7 @@ static char *handle_cli_database_show(struct ast_cli_entry *e, int cmd, struct a
 	}
 
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
+	ast_free(sql);
 	if(mysqlres != NULL){
 		while ((row = mysql_fetch_row(mysqlres)) != NULL) {
 			const char *key_s, *value_s;
@@ -771,7 +790,7 @@ static char *handle_cli_database_showkey(struct ast_cli_entry *e, int cmd, struc
 
 	ast_str_append(&sql, 0, "SELECT `key`, `value` FROM %s WHERE `key` LIKE '%%/%s' ORDER BY `key`;", dbtable, a->argv[2]);
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
-
+	ast_free(sql);
 	if(mysqlres != NULL){
 		while ((row = mysql_fetch_row(mysqlres)) != NULL) {
 			const char *key_s, *value_s;
@@ -939,6 +958,7 @@ static int manager_db_tree_get(struct mansession *s, const struct message *m)
 
 	astman_send_listack(s, m, "Result will follow", "start");
 	mysqlres = db_query_mysql(ast_str_buffer(sql));
+	ast_free(sql);
 	if(mysqlres != NULL){
 		while ((row = mysql_fetch_row(mysqlres)) != NULL) {
 			const char *key_s, *value_s;
