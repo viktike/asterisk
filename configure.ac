@@ -555,6 +555,7 @@ AST_EXT_LIB_SETUP([FLITE], [A small fast portable speech synthesis system], [fli
 AST_EXT_LIB_SETUP([KAFKA], [Kafka messaging], [rdkafka])
 AST_EXT_LIB_SETUP([ALSA], [Advanced Linux Sound Architecture], [asound])
 AST_EXT_LIB_SETUP([WEBSOCKETS], [Websocket client library], [websockets])
+AST_EXT_LIB_SETUP([BONJOUR], [Zeroconf Bonjour (Rendezvous) DNS service discovery], [dns_sd])
 AST_EXT_LIB_SETUP([AMR_NB], [AMR Audio Codec (Narrowband) Decoder/Encoder], [opencore-amrnb])
 AST_EXT_LIB_SETUP([AMR_WB_DECODER], [AMR-WB Audio Codec (Wideband) Decoder], [opencore-amrwb])
 AST_EXT_LIB_SETUP([AMR_WB_ENCODER], [AMR-WB Audio Codec (Wideband) Encoder], [vo-amrwbenc])
@@ -1683,7 +1684,7 @@ fi
 
 AST_EXT_LIB_CHECK([ALSA], [asound], [snd_pcm_open], [alsa/asoundlib.h])
 AST_EXT_LIB_CHECK([WEBSOCKETS], [websockets], [connect], [libwebsockets.h])
-
+AST_EXT_LIB_CHECK([BONJOUR], [dns_sd], [DNSServiceRegister], [dns_sd.h])
 AST_EXT_LIB_CHECK([LAME], [mp3lame], [get_lame_version], [lame/lame.h])
 AST_EXT_LIB_CHECK([BFD], [bfd], [bfd_openr], [bfd.h])
 # Fedora/RedHat/CentOS require extra libraries

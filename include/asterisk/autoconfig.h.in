@@ -146,6 +146,10 @@
 /* Define to 1 if you have the Bluetooth library. */
 #undef HAVE_BLUETOOTH
 
+/* Define to 1 if you have the Zeroconf Bonjour (Rendezvous) DNS service
+   discovery library. */
+#undef HAVE_BONJOUR
+
 /* Define to 1 if you have the file `bridges/bridge_softmix/include/hrirs.h'.
    */
 #undef HAVE_BRIDGES_BRIDGE_SOFTMIX_INCLUDE_HRIRS_H

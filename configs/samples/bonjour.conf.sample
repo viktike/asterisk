@@ -1,0 +1,52 @@
+[general]
+;bindaddr=eth1
+domain=local
+
+[asterisk-voicemail]
+name=Asterisk VoiceBox
+type=_http._tcp
+port=80
+parameter=path=/cgi-bin/vmail.cgi
+
+[asterisk_notify]
+name=Asterisk Notifier
+type=_astnotify._udp
+port=40000
+
+[asterisk_sip]
+name=SIP Service
+type=_sip._udp
+port=5060
+parameter=auth=md5
+parameter=realm=bender
+parameter=proxy=bender
+parameter=dtmfmode=sipinfo
+parameter=echotest=*500
+parameter=reception=2000
+parameter=voicemail=*121
+
+[inter_asterisk_xchange]
+name=IAX Service
+type=_iax._udp
+port=5036
+parameter=auth=md5
+parameter=context=internal
+parameter=echotest=*500
+parameter=reception=2000
+parameter=voicemail=*121
+
+[asterisk_remotedial]
+name=Remote Dial Service
+type=_astremotedial._tcp
+port=4570
+parameter=apiver=1
+parameter=userid=fred
+parameter=extension=100
+parameter=devicetype=ZAP
+parameter=context=internal
+
+[asterisk_manager]
+name=Management Service
+type=_astmgr._tcp
+port=5038
+parameter=apiver=1
