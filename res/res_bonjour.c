@@ -42,8 +42,6 @@
 #include "asterisk/config.h"
 #include "asterisk/utils.h"
 
-// #define AST_MODULE "res_bonjour"
-
 #define BONJOUR_CONFIG "bonjour.conf"
 
 enum { SUCCESS=0, FAILURE };
