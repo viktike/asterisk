@@ -261,9 +261,9 @@ static int ServiceRegister(struct bonjour_service* const service)
   
   typedef union { unsigned char b[2]; unsigned short NotAnInteger; } Opaque16;
   Opaque16 registerPort = { { service->port >> 8, service->port & 0xFF } };
-
+  DNSServiceFlags flags = kDNSServiceFlagsAllowRemoteQuery;
   DNSServiceErrorType errorCode = DNSServiceRegister(&service->sdRef,
-						     kDNSServiceFlagsAllowRemoteQuery, // flags
+  					     flags,
 						     service->interfaceIndex ? service->interfaceIndex : general_bonjour_services->interfaceIndex,
 						     service->name,
 						     service->regtype,
@@ -275,6 +275,22 @@ static int ServiceRegister(struct bonjour_service* const service)
 						     mDNS_callback,
 						     service
 						     );
+  if(errorCode == kDNSServiceErr_Unsupported){
+    DNSServiceFlags flags = 0;
+    errorCode = DNSServiceRegister(&service->sdRef,
+                 flags,
+						     service->interfaceIndex ? service->interfaceIndex : general_bonjour_services->interfaceIndex,
+						     service->name,
+						     service->regtype,
+						     service->domain ? service->domain : general_bonjour_services->domain,
+						     NULL, // hostname: localhost
+						     registerPort.NotAnInteger,
+						     service->txtRecord ? strlen(service->txtRecord) : 0,
+						     service->txtRecord,
+						     mDNS_callback,
+						     service
+			);
+  }
 
   if(errorCode == kDNSServiceErr_NoError){
     service->sdFD = DNSServiceRefSockFD(service->sdRef);
