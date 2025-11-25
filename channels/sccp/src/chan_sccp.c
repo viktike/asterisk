@@ -359,7 +359,19 @@ int sccp_reload(void)
 	sccp_readingtype_t readingtype = 0;
 	int returnval = 0;
 
+	/* Defensive check: if globals aren't initialized or module isn't running,
+	 * don't attempt to take the rwlock (it may have been destroyed during unload).
+	 */
+	boolean_t locked = FALSE;
+
+	if (!sccp_globals || !GLOB(module_running)) {
+		pbx_log(LOG_ERROR, "SCCP: reload called but module not running or globals uninitialized\n");
+		return 4;
+	}
+
 	pbx_rwlock_wrlock(&GLOB(lock));
+	locked = TRUE;
+
 	if (GLOB(reload_in_progress) == TRUE) {
 		pbx_log(LOG_ERROR, "SCCP reloading already in progress.\n");
 		returnval = 4;
@@ -419,7 +431,9 @@ int sccp_reload(void)
 	}
 EXIT:
 	GLOB(reload_in_progress) = FALSE;
-	pbx_rwlock_unlock(&GLOB(lock));
+	if (locked) {
+		pbx_rwlock_unlock(&GLOB(lock));
+	}
 	return returnval;
 }
 
