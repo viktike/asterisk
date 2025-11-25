@@ -92,7 +92,7 @@ static void* mDNS_thread(void* param)
   while(mDNS_thread_continue) {
     int result;
     int maxfd = -1;
-    fd_set fdset;
+    ast_fdset fdset;
     struct timeval timeout;
     struct bonjour_service* service;
     
@@ -102,7 +102,8 @@ static void* mDNS_thread(void* param)
     }
     FD_ZERO(&fdset);
     for(service = bonjour_services; service != NULL; service = service->next) {
-      if (service->sdFD >= 0){
+      /* Only monitor valid sockets which have an active DNSServiceRef */
+      if (service->sdFD >= 0 && service->sdRef) {
         FD_SET(service->sdFD, &fdset);
         if (service->sdFD > maxfd){
           maxfd = service->sdFD;
@@ -112,17 +113,18 @@ static void* mDNS_thread(void* param)
     ast_mutex_unlock(&services_lock);
 
     timeout.tv_sec = 1; timeout.tv_usec = 0;
-    result = select(maxfd+1, &fdset, NULL, NULL, &timeout);
+    result = ast_select(maxfd+1, &fdset, NULL, NULL, &timeout);
     if(result > 0) {
       if(ast_mutex_lock(&services_lock)) {
         ast_log(LOG_WARNING, "Unable to get lock on service list.\n");
         continue;
       }
       for(service = bonjour_services; service != NULL; service = service->next) {
-        if(FD_ISSET(service->sdFD, &fdset)) {
+        /* Ensure both fd and ref are valid before processing */
+        if(service->sdFD >= 0 && service->sdRef && FD_ISSET(service->sdFD, &fdset)) {
           DNSServiceErrorType errorCode = DNSServiceProcessResult(service->sdRef);
           if(errorCode != kDNSServiceErr_NoError) {
-	    logServiceError(errorCode);
+    	    logServiceError(errorCode);
           }
         }
       }
@@ -284,6 +286,7 @@ static int ServiceRegister(struct bonjour_service* const service)
   } else {
     logServiceError(errorCode);
     service->sdRef = NULL; // disable service
+    service->sdFD = -1; /* ensure we don't monitor fd 0 */
     return FAILURE;
   }
   return SUCCESS;
@@ -294,6 +297,7 @@ static void ServiceUnregister(struct bonjour_service* const service)
   if(service && service->sdRef){
     DNSServiceRefDeallocate(service->sdRef);
     service->sdRef = NULL;
+    service->sdFD = -1;
     ast_log(LOG_NOTICE, "Unregistered [%s]\n",service->handle);
   }
 }
@@ -326,9 +330,23 @@ static void ServicesUnregister()
 
 static struct bonjour_service* Add2ServiceList(struct bonjour_service* services)
 {
-  if(!services) return ast_calloc(sizeof(struct bonjour_service),sizeof(char));
+  struct bonjour_service *entry;
+
+  entry = ast_calloc(1, sizeof(struct bonjour_service));
+  if (!entry) return NULL;
+
+  /* initialize safe defaults */
+  entry->next = NULL;
+  entry->sdRef = NULL;
+  entry->sdFD = -1;
+  entry->interfaceIndex = 0;
+  entry->port = 0;
+  entry->handle = entry->bindaddr = entry->name = entry->regtype =
+    entry->domain = entry->host = entry->txtRecord = NULL;
+
+  if(!services) return entry;
   while(services->next) services = services->next;
-  services->next = ast_calloc(sizeof(struct bonjour_service),sizeof(char));
+  services->next = entry;
   return services->next;
 }
 
