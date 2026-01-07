@@ -591,6 +591,38 @@ static char *handle_cli_database_exists(struct ast_cli_entry *e, int cmd, struct
         }       
 }
 
+static char *handle_cli_database_reload(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
+{
+        switch (cmd) {
+                case CLI_INIT:
+                        e->command = "database reload";
+                        e->usage =
+                                "Usage: database reload\n"
+                                "       Try to reconnect to the database.\n";
+                        return NULL;
+                case CLI_GENERATE:
+                        return NULL;
+        }
+        if (a->argc != 2) {
+                return CLI_SHOWUSAGE;
+        }
+
+	mysql_close(mysql);
+        load_config();
+        if(db_open()){
+                ast_cli(a->fd, "Reconnect failed.\n");
+                return CLI_FAILURE;
+        } else {
+                ast_cli(a->fd, "Reconnect successful.\n");
+                if(db_create_astdb()){
+                        ast_cli(a->fd, "Table create failed.\n");
+                        return CLI_FAILURE;
+                } else {
+                    return CLI_SUCCESS;
+                }
+        }
+}
+
 static char *handle_cli_database_put(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 {
 	int res;
@@ -856,6 +888,7 @@ static struct ast_cli_entry cli_database[] = {
 	AST_CLI_DEFINE(handle_cli_database_showkey, "Shows database contents"),
 	AST_CLI_DEFINE(handle_cli_database_get,     "Gets database value"),
 	AST_CLI_DEFINE(handle_cli_database_exists,  "Check if a key/tree exists or not"),
+	AST_CLI_DEFINE(handle_cli_database_reload,  "Try to reload & reconnect to astdb_mysql"),
 	AST_CLI_DEFINE(handle_cli_database_put,     "Adds/updates database value"),
 	AST_CLI_DEFINE(handle_cli_database_del,     "Removes database key/value"),
 	AST_CLI_DEFINE(handle_cli_database_deltree, "Removes database keytree/values"),
