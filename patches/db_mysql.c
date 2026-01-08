@@ -185,6 +185,8 @@ static int load_config(void)
 	if (!cfg || cfg == CONFIG_STATUS_FILEINVALID) {
 		ast_log(LOG_WARNING, "Unable to load " CONFIG ".  AstDB failed!\n");
 		return -1;
+	} else {
+		ast_log(LOG_NOTICE, "Loading " CONFIG "!\n");
 	}
 
 	dbhost = ast_str_create(MAX_DB_FIELD);
@@ -194,30 +196,30 @@ static int load_config(void)
 	for (var = ast_variable_browse(cfg, "general"); var; var = var->next) {
 		if (!strcasecmp(var->name, "dbhost")) {
 			ast_str_set(&dbhost, 0, "%s", var->value);
-			ast_log(LOG_WARNING, "Found AstDB dbhost in config: %s\n", ast_str_buffer(dbhost));
+			ast_log(LOG_NOTICE, "Found AstDB dbhost in config: %s\n", ast_str_buffer(dbhost));
         } else if(!strcasecmp(var->name, "dbsock")){
 			ast_str_set(&dbsock, 0, "%s", var->value);
-            ast_log(LOG_WARNING, "Found AstDB dbsock in config: %s\n", ast_str_buffer(dbsock));
+                        ast_log(LOG_NOTICE, "Found AstDB dbsock in config: %s\n", ast_str_buffer(dbsock));
 		} else if(!strcasecmp(var->name, "dbname")){
 			ast_copy_string(dbname, var->value, sizeof(dbname));
-			ast_log(LOG_WARNING, "Found AstDB dbname in config: %s\n", dbname);
+			ast_log(LOG_NOTICE, "Found AstDB dbname in config: %s\n", dbname);
 		} else if(!strcasecmp(var->name, "dbuser")){
 			ast_copy_string(dbuser, var->value, sizeof(dbuser));
-			ast_log(LOG_WARNING, "Found AstDB dbuser in config: %s\n", dbuser);
+			ast_log(LOG_NOTICE, "Found AstDB dbuser in config: %s\n", dbuser);
 		} else if(!strcasecmp(var->name, "dbpass")){
 			ast_copy_string(dbpass, var->value, sizeof(dbpass));
-			ast_log(LOG_WARNING, "Found AstDB dbpass in config.\n");
+			ast_log(LOG_NOTICE, "Found AstDB dbpass in config.\n");
 		} else if(!strcasecmp(var->name, "dbport")){
 			ast_copy_string(dbport, var->value, sizeof(dbport));
-			ast_log(LOG_WARNING, "Found AstDB dbport in config: %s\n", dbport);
+			ast_log(LOG_NOTICE, "Found AstDB dbport in config: %s\n", dbport);
 		} else if(!strcasecmp(var->name, "dbcharset")){
 			ast_copy_string(dbcharset, var->value, sizeof(dbcharset));
-			ast_log(LOG_WARNING, "Found AstDB dbcharset in config: %s\n", dbcharset);
+			ast_log(LOG_NOTICE, "Found AstDB dbcharset in config: %s\n", dbcharset);
 		} else if(!strcasecmp(var->name, "dbtable")){
 			ast_copy_string(dbtable, var->value, sizeof(dbtable));
-			ast_log(LOG_WARNING, "Found AstDB dbtable in config: %s\n", dbtable);
+			ast_log(LOG_NOTICE, "Found AstDB dbtable in config: %s\n", dbtable);
 		} else {
-			ast_log(LOG_WARNING, "Found unknown variable in astdb_mysql.conf general section: %s = %s\n", var->name, var->value);
+			ast_log(LOG_WARNING, "Found unknown variable in " CONFIG " [general] section: %s = %s\n", var->name, var->value);
 		}
 	}
 	ast_config_destroy(cfg);
@@ -228,7 +230,8 @@ static int load_config(void)
 static MYSQL_RES* db_query_mysql(const char *sql)
 {    
 	if(!mysql_ping(mysql)){
-		// ast_log(LOG_VERBOSE, "AstDB connection lost, reconnecting to %s.\n", dbhost);
+		mysql_close(mysql);
+		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during query, reconnecting...\n");
 		db_open();
 	}
 	mysql_query(mysql, sql);
@@ -240,7 +243,8 @@ static int db_execute_mysql(const char *sql)
 	int mysql_query_res;
     
 	if(!mysql_ping(mysql)){
-		// ast_log(LOG_VERBOSE, "AstDB connection lost, reconnecting to %s.\n", dbhost);
+		mysql_close(mysql);
+		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during statement execution, reconnecting...\n");
 		db_open();
 	}
 	if ((mysql_query_res = mysql_query(mysql, sql)) != 0){
@@ -255,7 +259,7 @@ static int db_create_astdb(void)
 {
 	struct ast_str *sql = ast_str_create(MAX_DB_VAL);
 	int res;
-    ast_str_append(&sql, 0, "CREATE TABLE IF NOT EXISTS %s (`key` VARCHAR(%d) NOT NULL, `value` VARCHAR(%d) NULL DEFAULT NULL, PRIMARY KEY (`key`));", dbtable, MAX_DB_FIELD, MAX_DB_VAL);
+        ast_str_append(&sql, 0, "CREATE TABLE IF NOT EXISTS %s (`key` VARCHAR(%d) NOT NULL, `value` VARCHAR(%d) NULL DEFAULT NULL, PRIMARY KEY (`key`));", dbtable, MAX_DB_FIELD, MAX_DB_VAL);
 
 	res = db_execute_mysql(ast_str_buffer(sql));
 	ast_free(sql);
@@ -607,15 +611,15 @@ static char *handle_cli_database_reload(struct ast_cli_entry *e, int cmd, struct
                 return CLI_SHOWUSAGE;
         }
 
-	mysql_close(mysql);
+        mysql_close(mysql);
         load_config();
         if(db_open()){
-                ast_cli(a->fd, "Reconnect failed.\n");
+                ast_cli(a->fd, "AstDB MySQL Reconnect failed!\n");
                 return CLI_FAILURE;
         } else {
-                ast_cli(a->fd, "Reconnect successful.\n");
+                ast_cli(a->fd, "AstDB MySQL Reconnect successful.\n");
                 if(db_create_astdb()){
-                        ast_cli(a->fd, "Table create failed.\n");
+                        ast_cli(a->fd, "AstDB MySQL table %s create failed.\n", dbtable);
                         return CLI_FAILURE;
                 } else {
                     return CLI_SUCCESS;
@@ -888,11 +892,11 @@ static struct ast_cli_entry cli_database[] = {
 	AST_CLI_DEFINE(handle_cli_database_showkey, "Shows database contents"),
 	AST_CLI_DEFINE(handle_cli_database_get,     "Gets database value"),
 	AST_CLI_DEFINE(handle_cli_database_exists,  "Check if a key/tree exists or not"),
-	AST_CLI_DEFINE(handle_cli_database_reload,  "Try to reload & reconnect to astdb_mysql"),
+	AST_CLI_DEFINE(handle_cli_database_reload,  "Try to reload & reconnect to AstDB MySQL"),
 	AST_CLI_DEFINE(handle_cli_database_put,     "Adds/updates database value"),
 	AST_CLI_DEFINE(handle_cli_database_del,     "Removes database key/value"),
 	AST_CLI_DEFINE(handle_cli_database_deltree, "Removes database keytree/values"),
-	AST_CLI_DEFINE(handle_cli_database_query,   "Run a user-specified query on the astdb"),
+	AST_CLI_DEFINE(handle_cli_database_query,   "Run a user-specified query on the AstDB MySQL"),
 };
 
 static int manager_dbput(struct mansession *s, const struct message *m)
