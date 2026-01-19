@@ -136,7 +136,7 @@ char dbtable[MAX_DB_FIELD];
 static struct ast_str *dbhost = NULL;
 static struct ast_str *dbsock = NULL;
 
-MYSQL *mysql;
+static MYSQL mysql;
 
 #ifdef MYSQL_OPT_RECONNECT
 my_bool trueval = 1;
@@ -148,17 +148,14 @@ static int db_open(void)
 	char statement[512];
 	unsigned int port;
 
-	if(!(mysql = mysql_init(NULL))){
-		ast_log(LOG_WARNING, "AstDB mysql_init returned NULL!\n");
-		return -1;
-	}
+	mysql_init(&mysql);
 
 	snprintf(set_names, sizeof(set_names), "SET NAMES %s", dbcharset);
-	mysql_real_escape_string(mysql, statement, set_names, sizeof(set_names));
-	mysql_options(mysql, MYSQL_INIT_COMMAND, set_names);
-	mysql_options(mysql, MYSQL_SET_CHARSET_NAME, dbcharset);
+	mysql_real_escape_string(&mysql, statement, set_names, sizeof(set_names));
+	mysql_options(&mysql, MYSQL_INIT_COMMAND, set_names);
+	mysql_options(&mysql, MYSQL_SET_CHARSET_NAME, dbcharset);
 #ifdef MYSQL_OPT_RECONNECT
-	mysql_options(mysql, MYSQL_OPT_RECONNECT, &trueval);
+	mysql_options(&mysql, MYSQL_OPT_RECONNECT, &trueval);
 #endif
 	
 
@@ -166,11 +163,11 @@ static int db_open(void)
 		ast_log(LOG_WARNING, "Invalid AstDB port: '%s'\n", dbport);
 		port = 0;
 	}
-	if(!mysql_real_connect(mysql, ast_str_strlen(dbhost) ? ast_str_buffer(dbhost) : NULL, dbuser, dbpass, dbname, port, ast_str_strlen(dbsock) ? ast_str_buffer(dbsock) : NULL, 0 )){
-		ast_log(LOG_ERROR, "AstDB mysql_real_connect(mysql,%s,dbpass,%s,...) failed(%d): %s\n", dbuser, dbname, mysql_errno(mysql), mysql_error(mysql));
+	if(!mysql_real_connect(&mysql, ast_str_strlen(dbhost) ? ast_str_buffer(dbhost) : NULL, dbuser, dbpass, dbname, port, ast_str_strlen(dbsock) ? ast_str_buffer(dbsock) : NULL, 0 )){
+		ast_log(LOG_ERROR, "AstDB mysql_real_connect(mysql,%s,dbpass,%s,...) failed(%d): %s\n", dbuser, dbname, mysql_errno(&mysql), mysql_error(&mysql));
 		return -1;
 	} else {
-		// mysql_autocommit(mysql, 1);
+		// mysql_autocommit(&mysql, 1);
 		return 0;
 	}
 }
@@ -229,29 +226,29 @@ static int load_config(void)
 
 static MYSQL_RES* db_query_mysql(const char *sql)
 {    
-	if(!mysql_ping(mysql)){
-		mysql_close(mysql);
+	if(mysql_ping(&mysql)){
+		mysql_close(&mysql);
 		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during query, reconnecting...\n");
 		db_open();
 	}
-	mysql_query(mysql, sql);
-	return mysql_store_result(mysql);
+	mysql_query(&mysql, sql);
+	return mysql_store_result(&mysql);
 }
 
 static int db_execute_mysql(const char *sql)
 {
 	int mysql_query_res;
     
-	if(!mysql_ping(mysql)){
-		mysql_close(mysql);
+	if(mysql_ping(&mysql)){
+		mysql_close(&mysql);
 		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during statement execution, reconnecting...\n");
 		db_open();
 	}
-	if ((mysql_query_res = mysql_query(mysql, sql)) != 0){
-		ast_log(LOG_WARNING, "AstDB mysql_query failed. Error: %s\n", mysql_error(mysql));
+	if ((mysql_query_res = mysql_query(&mysql, sql)) != 0){
+		ast_log(LOG_WARNING, "AstDB mysql_query failed. Error: %s\n", mysql_error(&mysql));
 		return -1;
 	} else {
-		return mysql_affected_rows(mysql);
+		return mysql_affected_rows(&mysql);
 	}
 }
 
@@ -611,7 +608,7 @@ static char *handle_cli_database_reload(struct ast_cli_entry *e, int cmd, struct
                 return CLI_SHOWUSAGE;
         }
 
-        mysql_close(mysql);
+        mysql_close(&mysql);
         load_config();
         if(db_open()){
                 ast_cli(a->fd, "AstDB MySQL Reconnect failed!\n");
@@ -1090,7 +1087,7 @@ static void astdb_atexit(void)
 	ast_manager_unregister("DBDel");
 	ast_manager_unregister("DBDelTree");
 
-	mysql_close(mysql);
+	mysql_close(&mysql);
 
 	ast_free(dbhost);
 	ast_free(dbsock);

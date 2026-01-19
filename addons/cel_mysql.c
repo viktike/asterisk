@@ -199,7 +199,7 @@ static void mysql_log(struct ast_event *event)
 	ast_strftime(timestr, sizeof(timestr), DATE_FORMAT, &tm);
 
 db_reconnect:
-		if ((!connected) && myhostname && mydbuser && mypassword && mydbname && mydbsock && mydbport) {
+	if ((!connected) && myhostname && mydbuser && mypassword && mydbname && mydbsock && mydbport) {
 		
 		mysql_init(&mysql);
 		
@@ -243,6 +243,7 @@ db_reconnect:
 				default:
 					ast_log(LOG_ERROR, "cel_mysql: Unknown connection error: (%d) %s\n", mysql_errno(&mysql), mysql_error(&mysql));
 			}
+			mysql_close(&mysql);
 			retries--;
 			if (retries) {
 				goto db_reconnect;
