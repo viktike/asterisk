@@ -136,6 +136,8 @@ char dbtable[MAX_DB_FIELD];
 static struct ast_str *dbhost = NULL;
 static struct ast_str *dbsock = NULL;
 
+AST_MUTEX_DEFINE_STATIC(dblock);
+
 static MYSQL mysql;
 
 #ifdef MYSQL_OPT_RECONNECT
@@ -225,31 +227,40 @@ static int load_config(void)
 }
 
 static MYSQL_RES* db_query_mysql(const char *sql)
-{    
+{
+	MYSQL_RES *result = NULL;
+	ast_mutex_lock(&dblock);
 	if(mysql_ping(&mysql)){
 		mysql_close(&mysql);
 		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during query, reconnecting...\n");
 		db_open();
 	}
-	mysql_query(&mysql, sql);
-	return mysql_store_result(&mysql);
+	if(mysql_query(&mysql, sql) != 0){
+                ast_log(LOG_WARNING, "AstDB mysql_query failed. Error: %s\n", mysql_error(&mysql));
+	} else {
+		result = mysql_store_result(&mysql);
+	}
+	ast_mutex_unlock(&dblock);
+	return result;
 }
 
 static int db_execute_mysql(const char *sql)
 {
+	int affected_rows = -1;
 	int mysql_query_res;
-    
+        ast_mutex_lock(&dblock);
 	if(mysql_ping(&mysql)){
 		mysql_close(&mysql);
 		ast_log(LOG_NOTICE, "AstDB MySQL connection lost during statement execution, reconnecting...\n");
 		db_open();
 	}
-	if ((mysql_query_res = mysql_query(&mysql, sql)) != 0){
+	if((mysql_query_res = mysql_query(&mysql, sql)) != 0){
 		ast_log(LOG_WARNING, "AstDB mysql_query failed. Error: %s\n", mysql_error(&mysql));
-		return -1;
 	} else {
-		return mysql_affected_rows(&mysql);
+		affected_rows =  mysql_affected_rows(&mysql);
 	}
+	ast_mutex_unlock(&dblock);
+	return affected_rows;
 }
 
 static int db_create_astdb(void)
