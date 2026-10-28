@@ -977,6 +977,7 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 	struct ast_tm tm;
 	char qlog_msg[8192];
 	int qlog_len;
+	int res = 0;
 	char time_str[30];
 
 	if (!logger_initialized) {
@@ -1010,7 +1011,7 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 				SENTINEL);
 
 			/* Store the log */
-			ast_store_realtime("queue_log", "time", time_str,
+			res = ast_store_realtime("queue_log", "time", time_str,
 				"callid", callid,
 				"queuename", queuename,
 				"agent", agent,
@@ -1022,7 +1023,7 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 				"data5", S_OR(args.data[4], ""),
 				SENTINEL);
 		} else {
-			ast_store_realtime("queue_log", "time", time_str,
+			res = ast_store_realtime("queue_log", "time", time_str,
 				"callid", callid,
 				"queuename", queuename,
 				"agent", agent,
@@ -1030,7 +1031,11 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 				"data", qlog_msg,
 				SENTINEL);
 		}
-
+		
+		if (res < 0) {
+			ast_log(LOG_WARNING, "logger.c: Realtime inserting queue_log failed: time=%s callid=%s queuename=%s agent=%s event=%s data=%s\n", time_str, callid, queuename, agent, event, qlog_msg );
+		}
+		
 		if (!logfiles.queue_log_to_file) {
 			return;
 		}
